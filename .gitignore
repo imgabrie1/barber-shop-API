@@ -1,0 +1,11 @@
+node_modules/
+pnpm-lock.yaml
+.env
+.vscode
+dist
+XXXXXXXXXXXXXXXX.txt
+.vercel
+GEMINI.md
+cert
+count-exercises.ts
+*.sql
