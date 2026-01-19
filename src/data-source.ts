@@ -40,6 +40,7 @@ const dataSourceConfig = (): DataSourceOptions => {
     process.env.NODE_ENV === "production"
       ? {
             // ca: getCaCert(),
+
             rejectUnauthorized: true,
           }
         : { rejectUnauthorized: false };
