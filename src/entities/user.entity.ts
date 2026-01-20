@@ -20,8 +20,14 @@ export class User {
   @Column({ type: "varchar", length: 50 })
   name: string;
 
+  @Column({ type: "varchar", length: 25, unique: true })
+  phoneNumber: string;
+
   @Column({ type: "varchar", length: 125 })
   password: string;
+
+  @Column({ type: "varchar", nullable: true })
+  refreshToken: string;
 
   @Column({ type: "enum", enum: roleEnum, default: roleEnum.CLIENT })
   role: roleEnum;
