@@ -7,13 +7,10 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "ts-node-dev --cls --rs --ignore-watch node_modules src/server.ts",
+    "dev": "NODE_TLS_REJECT_UNAUTHORIZED=0 ts-node-dev --cls --rs --ignore-watch node_modules dist/server.js",
     "start:local": "NODE_TLS_REJECT_UNAUTHORIZED=0 node dist/server.js",
     "typeorm": "typeorm-ts-node-commonjs",
-    "reset": "rm -rf dist && rm -rf src/migrations",
-    "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint src/**/*.ts --fix",
-    "format": "prettier --write src/**/*.ts"
+    "reset": "rm -rf dist rm -rf src/migrations"
   },
   "keywords": [],
   "author": "",
