@@ -5,6 +5,7 @@ import {
   adminDeleteUserController,
   autoDeleteUserController,
   createUserController,
+  getUserByIDcontroller,
   getUsersController,
   patchUserController,
 } from "../controllers/users.controller";
@@ -31,6 +32,13 @@ userRoutes.get(
   ensureUserIsAuthenticatedMiddleware,
   ensureIsAdminOrBarberMiddleware,
   getUsersController,
+);
+
+userRoutes.get(
+  "/:id",
+  ensureUserIsAuthenticatedMiddleware,
+  ensureIsAdminOrBarberMiddleware,
+  getUserByIDcontroller,
 );
 
 userRoutes.delete(
