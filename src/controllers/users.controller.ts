@@ -5,7 +5,7 @@ import { hashSync } from "bcryptjs";
 import { AppError } from "../errors";
 import patchUserService from "../services/users/patchUser.service";
 import getUsersService from "../services/users/getUsers.service";
-import autoDeleteUserService from "../services/users/autoDeleteUser.service";
+import deleteUserService from "../services/users/deleteUser.service";
 
 export const createUserController = async (
   req: Request,
@@ -55,6 +55,15 @@ export const getUsersController = async (
 
 export const autoDeleteUserController = async (req: Request, res: Response) => {
   const { id } = req;
-  autoDeleteUserService(id);
+  deleteUserService(id);
+  return res.status(204).send();
+};
+
+export const adminDeleteUserController = async (
+  req: Request,
+  res: Response,
+) => {
+  const { id } = req.params;
+  deleteUserService(id as string);
   return res.status(204).send();
 };

@@ -2,7 +2,7 @@ import { AppDataSource } from "../../data-source";
 import { User } from "../../entities/user.entity";
 import { AppError } from "../../errors";
 
-const autoDeleteUserService = async (userID: string): Promise<void> => {
+const deleteUserService = async (userID: string): Promise<void> => {
   const userRepo = AppDataSource.getRepository(User);
 
   const user = await userRepo.findOne({
@@ -17,4 +17,4 @@ const autoDeleteUserService = async (userID: string): Promise<void> => {
   return;
 };
 
-export default autoDeleteUserService;
+export default deleteUserService;

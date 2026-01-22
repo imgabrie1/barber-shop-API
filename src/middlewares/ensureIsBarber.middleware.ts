@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { AppError } from "../errors";
 
-const ensureIsAdminMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+const ensureIsBarberMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 
     const authenticatedUser = req
 
@@ -12,4 +12,4 @@ const ensureIsAdminMiddleware = async (req: Request, res: Response, next: NextFu
     return next()
 }
 
-export default ensureIsAdminMiddleware
+export default ensureIsBarberMiddleware
