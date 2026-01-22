@@ -6,6 +6,7 @@ import { AppError } from "../errors";
 import patchUserService from "../services/users/patchUser.service";
 import getUsersService from "../services/users/getUsers.service";
 import deleteUserService from "../services/users/deleteUser.service";
+import getUserByIDservice from "../services/users/getUserByID.service";
 
 export const createUserController = async (
   req: Request,
@@ -51,6 +52,15 @@ export const getUsersController = async (
 ): Promise<Response> => {
   const users = await getUsersService();
   return res.status(200).json(users);
+};
+
+export const getUserByIDcontroller = async (
+  req: Request,
+  res: Response,
+): Promise<Response> => {
+  const { id } = req.params;
+  const user = await getUserByIDservice(id as string);
+  return res.status(200).json(user);
 };
 
 export const autoDeleteUserController = async (req: Request, res: Response) => {
