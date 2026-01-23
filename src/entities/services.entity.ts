@@ -6,7 +6,7 @@ export class Service {
   id: string;
 
   @Column({ type: "varchar" })
-  name: Date;
+  name: string;
 
   @Column({ type: "int" })
   durationMinutes: number;
