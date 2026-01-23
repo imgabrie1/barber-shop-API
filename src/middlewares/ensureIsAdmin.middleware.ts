@@ -6,7 +6,7 @@ const ensureIsAdminMiddleware = async (req: Request, res: Response, next: NextFu
     const authenticatedUser = req
 
     if(authenticatedUser.role !== "admin"){
-        throw new AppError("Permissão insuficiente", 403)
+        throw new AppError("Permissão insuficiente (nao é admin)", 403)
     }
     console.log("user:", authenticatedUser.id)
     return next()

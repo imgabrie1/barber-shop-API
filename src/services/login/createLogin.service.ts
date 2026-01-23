@@ -25,7 +25,7 @@ const createLoginService = async (
 
   const token = jwt.sign(
     {
-      admin: user.role,
+      role: user.role,
     },
     process.env.SECRET_KEY!,
     {
@@ -36,7 +36,7 @@ const createLoginService = async (
 
   const refreshToken = jwt.sign(
     {
-      admin: user.role,
+      role: user.role,
     },
     process.env.SECRET_KEY!,
     {
