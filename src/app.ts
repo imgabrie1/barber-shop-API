@@ -4,6 +4,8 @@ import helmet from "helmet";
 import { handleErrors } from "./errors";
 import loginRoutes from "./routers/login.routes";
 import userRoutes from "./routers/user.routes";
+import adminRoutes from "./routers/admin.routes";
+import serviceRoutes from "./routers/services.routes";
 
 const app: Application = express();
 
@@ -12,8 +14,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/user", userRoutes);
 app.use("/login", loginRoutes);
+app.use("/user", userRoutes);
+app.use("/admin", adminRoutes)
+app.use("/service", serviceRoutes)
 
 
 app.get("/health", (_, res) => {
