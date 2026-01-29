@@ -4,7 +4,7 @@ import { AppError } from "../../errors";
 
 const getUserByIDservice = async (userID: string): Promise<User | null> => {
   const userRepo = AppDataSource.getRepository(User);
-  const user = userRepo.findOne({
+  const user = await userRepo.findOne({
     where: {
       id: userID,
     },

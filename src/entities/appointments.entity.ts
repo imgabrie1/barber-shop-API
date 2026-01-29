@@ -4,10 +4,14 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  Index,
 } from "typeorm";
 import { User } from "./user.entity";
 
 @Entity("appointments")
+@Index("IDX_APPOINTMENT_CLIENT", ["client"])
+@Index("IDX_APPOINTMENT_BARBER", ["barber"])
+@Index("IDX_APPOINTMENT_START_TIME", ["startTime"])
 export class Appointment {
   @PrimaryGeneratedColumn("uuid")
   id: string;
