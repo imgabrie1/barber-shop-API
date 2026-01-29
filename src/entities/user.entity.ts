@@ -8,11 +8,15 @@ import {
   UpdateDateColumn,
   BeforeInsert,
   BeforeUpdate,
+  Index,
 } from "typeorm";
 import roleEnum from "../enum/role.enum";
 import { Appointment } from "./appointments.entity";
 
 @Entity("users")
+@Index("IDX_USER_ROLE", ["role"])
+@Index("IDX_USER_ROLE_ACTIVE", ["role", "isActive"])
+@Index("IDX_USER_CREATED_AT", ["createdAt"])
 export class User {
   @PrimaryGeneratedColumn("uuid")
   id: string;

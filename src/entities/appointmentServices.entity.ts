@@ -3,10 +3,12 @@ import {
   ManyToOne,
   JoinColumn,
   PrimaryColumn,
+  Index,
 } from "typeorm";
 import { Appointment } from "./appointments.entity";
 import { Service } from "./services.entity";
 
+@Index("IDX_APPOINTMENT_SERVICE_SERVICE", ["service_id"])
 @Entity("appointment_services")
 export class AppointmentService {
   @PrimaryColumn("uuid")
