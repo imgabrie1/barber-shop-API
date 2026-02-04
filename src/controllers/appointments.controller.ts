@@ -6,6 +6,7 @@ import getAppointmentByIDservice from "../services/appointments/getAppointmentBy
 import { AppError } from "../errors";
 import getMyAppointmentsService from "../services/appointments/getMyAppointments.service";
 import roleEnum from "../enum/role.enum";
+import deleteAppointmentService from "../services/appointments/deleteAppointment.service";
 
 export const createAppointmentController = async (
   req: Request,
@@ -65,4 +66,16 @@ export const getMyAppointmentsController = async (
     limit,
   });
   return res.status(200).json(appointments);
+};
+
+export const deleteAppointmentController = async (
+  req: Request,
+  res: Response,
+): Promise<Response> => {
+  const appointmentID = req.params.appointmentID;
+  const userID = req.id;
+
+  await deleteAppointmentService(userID, appointmentID as string);
+
+  return res.status(204).send();
 };

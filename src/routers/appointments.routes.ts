@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   createAppointmentController,
+  deleteAppointmentController,
   getAppointmentByIDcontroller,
   getAppointmentsController,
   getMyAppointmentsController,
@@ -36,6 +37,12 @@ appointmentsRoutes.get(
   "/:id",
   ensureUserIsAuthenticatedMiddleware,
   getAppointmentByIDcontroller,
+);
+
+appointmentsRoutes.delete(
+  "/:appointmentID",
+  ensureUserIsAuthenticatedMiddleware,
+  deleteAppointmentController,
 );
 
 export default appointmentsRoutes;
