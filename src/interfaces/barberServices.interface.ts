@@ -10,6 +10,6 @@ import { Service } from "../entities/services.entity";
 export type iService = z.infer<typeof serviceSchema>;
 export type iServiceReturn = z.infer<typeof returnServiceSchema>;
 export type iUsersReturn = z.infer<typeof returnMultipleServiceSchema>;
-export type iUserUpdate = DeepPartial<iService>;
+export type iServiceUpdate = DeepPartial<iService>;
 
 export type iRepoService = Repository<Service>;

@@ -10,6 +10,8 @@ import ensureUserIsAuthenticatedMiddleware from "../middlewares/ensureUserIsAuth
 import ensureDataIsValidMiddleware from "../middlewares/ensureDataIsValid.middleware";
 import { createAppointmentSchema } from "../schemas/appointments.schema";
 import ensureIsAdminOrBarberMiddleware from "../middlewares/ensureIsAdminOrBarber.middleware";
+import { patchServiceController } from "../controllers/barberServices.controller";
+import ensureIsAdminMiddleware from "../middlewares/ensureIsAdmin.middleware";
 
 const appointmentsRoutes: Router = Router();
 
@@ -40,7 +42,7 @@ appointmentsRoutes.get(
 );
 
 appointmentsRoutes.delete(
-  "/:appointmentID",
+  "/:id",
   ensureUserIsAuthenticatedMiddleware,
   deleteAppointmentController,
 );
