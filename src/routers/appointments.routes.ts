@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  checkAvailabilityController,
   createAppointmentController,
   deleteAppointmentController,
   getAppointmentByIDcontroller,
@@ -10,8 +11,6 @@ import ensureUserIsAuthenticatedMiddleware from "../middlewares/ensureUserIsAuth
 import ensureDataIsValidMiddleware from "../middlewares/ensureDataIsValid.middleware";
 import { createAppointmentSchema } from "../schemas/appointments.schema";
 import ensureIsAdminOrBarberMiddleware from "../middlewares/ensureIsAdminOrBarber.middleware";
-import { patchServiceController } from "../controllers/barberServices.controller";
-import ensureIsAdminMiddleware from "../middlewares/ensureIsAdmin.middleware";
 
 const appointmentsRoutes: Router = Router();
 
@@ -25,7 +24,6 @@ appointmentsRoutes.post(
 appointmentsRoutes.get(
   "",
   ensureUserIsAuthenticatedMiddleware,
-  ensureIsAdminOrBarberMiddleware,
   getAppointmentsController,
 );
 
@@ -33,6 +31,12 @@ appointmentsRoutes.get(
   "/me",
   ensureUserIsAuthenticatedMiddleware,
   getMyAppointmentsController,
+);
+
+appointmentsRoutes.get(
+  "/availability",
+  ensureUserIsAuthenticatedMiddleware,
+  checkAvailabilityController,
 );
 
 appointmentsRoutes.get(
