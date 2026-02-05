@@ -8,6 +8,7 @@ import getMyAppointmentsService from "../services/appointments/getMyAppointments
 import roleEnum from "../enum/role.enum";
 import deleteAppointmentService from "../services/appointments/deleteAppointment.service";
 import checkAvailabilityService from "../services/appointments/checkAvailability.service";
+import patchAppointmentService from "../services/appointments/patchAppointment.service";
 
 export const createAppointmentController = async (
   req: Request,
@@ -98,3 +99,15 @@ export const checkAvailabilityController = async (
   return res.status(200).json(availableSlots);
 };
 
+export const patchAppointmentController = async (
+  req: Request,
+  res: Response,
+): Promise<Response> => {
+  const { id } = req.params;
+
+  let updatedData = { ...req.body };
+
+  const appointment = await patchAppointmentService(updatedData, id as string);
+
+  return res.status(200).json(appointment);
+};

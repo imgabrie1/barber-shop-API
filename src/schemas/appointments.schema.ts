@@ -1,5 +1,5 @@
 import z from "zod";
-import { returnUserSchema } from "./users.schema";
+import { returnUserInAppoitments } from "./users.schema";
 import { returnServiceSchema } from "./barberServices.schema";
 
 export const appointmentBaseSchema = z.object({
@@ -19,6 +19,7 @@ export const updateAppointmentSchema = appointmentBaseSchema
   .partial()
   .extend({
     id: z.string().optional(),
+    serviceIds: z.array(z.string()).min(1, "Selecione pelo menos um serviço").optional(),
   })
   .refine(
     (data) => {
@@ -39,8 +40,8 @@ export const returnAppointmentSchema = z.object({
   id: z.string(),
   startTime: z.date().or(z.string()),
   endTime: z.date().or(z.string()),
-  client: returnUserSchema.optional(),
-  barber: returnUserSchema.optional(),
+  client: returnUserInAppoitments.optional(),
+  barber: returnUserInAppoitments.optional(),
   services: z.array(returnServiceSchema)
 });
 

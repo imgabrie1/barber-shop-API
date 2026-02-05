@@ -2,6 +2,8 @@ import { AppDataSource } from "../../data-source";
 import { Appointment } from "../../entities/appointments.entity";
 import { IPaginationParams } from "../../interfaces/params.interface";
 import { Between } from "typeorm";
+import { returnAppointmentSchema } from "../../schemas/appointments.schema";
+import z from "zod";
 
 interface iGetAppointmentsParams extends IPaginationParams {
   date?: string;
@@ -14,7 +16,7 @@ const getAppointmentsService = async ({
   date,
   barberId,
 }: iGetAppointmentsParams): Promise<{
-  data: Appointment[];
+  data: any[];
   total: number;
   page: number;
   limit: number;
@@ -23,21 +25,10 @@ const getAppointmentsService = async ({
 
   const queryBuilder = appointmentRepo
     .createQueryBuilder("appointment")
-    .leftJoin("appointment.barber", "barber")
-    .leftJoin("appointment.client", "client")
-    .select([
-      "appointment.id",
-      "appointment.startTime",
-      "appointment.endTime",
-      "barber.id",
-      "barber.name",
-      "barber.role",
-      "barber.phoneNumber",
-      "client.id",
-      "client.name",
-      "client.role",
-      "client.phoneNumber",
-    ]);
+    .leftJoinAndSelect("appointment.barber", "barber")
+    .leftJoinAndSelect("appointment.client", "client")
+    .leftJoinAndSelect("appointment.appointmentServices", "as")
+    .leftJoinAndSelect("as.service", "service");
 
   if (barberId) {
     queryBuilder.andWhere("barber.id = :barberId", { barberId });
@@ -58,8 +49,16 @@ const getAppointmentsService = async ({
     .take(limit)
     .getManyAndCount();
 
+  const formattedAppointments = appointments.map((app) => {
+    const obj = {
+      ...app,
+      services: app.appointmentServices.map((as) => as.service),
+    };
+    return returnAppointmentSchema.parse(obj);
+  });
+
   return {
-    data: appointments,
+    data: formattedAppointments,
     total,
     page,
     limit,

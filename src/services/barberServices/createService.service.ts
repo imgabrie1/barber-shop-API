@@ -24,7 +24,6 @@ const createBarberServiceService = async (
     throw new AppError("Esse serviço já existe", 409);
   }
 
-//   const service: Service = serviceRepo.create(serviceData as DeepPartial<Service>);
   const service: Service = serviceRepo.create(serviceData);
 
   await serviceRepo.save(service);
