@@ -6,10 +6,11 @@ import {
   getAppointmentByIDcontroller,
   getAppointmentsController,
   getMyAppointmentsController,
+  patchAppointmentController,
 } from "../controllers/appointments.controller";
 import ensureUserIsAuthenticatedMiddleware from "../middlewares/ensureUserIsAuthenticated.middleware";
 import ensureDataIsValidMiddleware from "../middlewares/ensureDataIsValid.middleware";
-import { createAppointmentSchema } from "../schemas/appointments.schema";
+import { createAppointmentSchema, updateAppointmentSchema } from "../schemas/appointments.schema";
 import ensureIsAdminOrBarberMiddleware from "../middlewares/ensureIsAdminOrBarber.middleware";
 
 const appointmentsRoutes: Router = Router();
@@ -45,10 +46,11 @@ appointmentsRoutes.get(
   getAppointmentByIDcontroller,
 );
 
-appointmentsRoutes.delete(
+appointmentsRoutes.patch(
   "/:id",
   ensureUserIsAuthenticatedMiddleware,
-  deleteAppointmentController,
+  ensureDataIsValidMiddleware(updateAppointmentSchema),
+  patchAppointmentController,
 );
 
 export default appointmentsRoutes;

@@ -3,6 +3,7 @@ import { Appointment } from "../../entities/appointments.entity";
 import roleEnum from "../../enum/role.enum";
 import { AppError } from "../../errors";
 import { IPaginationParams } from "../../interfaces/params.interface";
+import { returnAppointmentSchema } from "../../schemas/appointments.schema";
 
 interface IGetMyAppointmentsParams extends IPaginationParams {
   userId: string;
@@ -15,7 +16,7 @@ const getMyAppointmentsService = async ({
   page = 1,
   limit = 10,
 }: IGetMyAppointmentsParams): Promise<{
-  data: Appointment[];
+  data: any[];
   total: number;
   page: number;
   limit: number;
@@ -24,23 +25,11 @@ const getMyAppointmentsService = async ({
 
   const qb = appointmentRepo
     .createQueryBuilder("appointment")
-    .leftJoin("appointment.barber", "barber")
-    .leftJoin("appointment.client", "client")
-    .select([
-      "appointment.id",
-      "appointment.startTime",
-      "appointment.endTime",
+    .leftJoinAndSelect("appointment.barber", "barber")
+    .leftJoinAndSelect("appointment.client", "client")
+    .leftJoinAndSelect("appointment.appointmentServices", "as")
+    .leftJoinAndSelect("as.service", "service");
 
-      "barber.id",
-      "barber.name",
-      "barber.role",
-      "barber.phoneNumber",
-
-      "client.id",
-      "client.name",
-      "client.role",
-      "client.phoneNumber",
-    ]);
   if (!userId) {
     throw new AppError("Usuário não autenticado", 401);
   }
@@ -68,8 +57,16 @@ const getMyAppointmentsService = async ({
     .take(limit)
     .getManyAndCount();
 
+  const formattedAppointments = appointments.map((app) => {
+    const obj = {
+      ...app,
+      services: app.appointmentServices.map((as) => as.service),
+    };
+    return returnAppointmentSchema.parse(obj);
+  });
+
   return {
-    data: appointments,
+    data: formattedAppointments,
     total,
     page,
     limit,
