@@ -5,8 +5,10 @@ import {
   ManyToOne,
   JoinColumn,
   Index,
+  OneToMany,
 } from "typeorm";
 import { User } from "./user.entity";
+import { AppointmentService } from "./appointmentServices.entity";
 
 @Entity("appointments")
 @Index("IDX_APPOINTMENT_CLIENT", ["client"])
@@ -33,4 +35,7 @@ export class Appointment {
   })
   @JoinColumn({ name: "barber_id" })
   barber: User;
+
+  @OneToMany(() => AppointmentService, (as) => as.appointment)
+  appointmentServices: AppointmentService[];
 }
