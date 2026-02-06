@@ -1,5 +1,5 @@
 import z from "zod";
-import { returnUserSchema } from "./users.schema";
+import { returnUserInAppoitments, returnUserSchema } from "./users.schema";
 import { returnServiceSchema } from "./barberServices.schema";
 
 import appointmentStatusEnum from "../enum/appointmentStatus.enum";

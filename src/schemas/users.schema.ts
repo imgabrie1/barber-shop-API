@@ -27,6 +27,6 @@ export const returnUserSchemaComplete = returnUserSchema.extend({
   updatedAt: z.date().or(string()),
 });
 
-// export const updateUser = userSchema.partial().omit({ role: true });
+export const returnUserInAppoitments = returnUserSchema.omit({ role: true, isActive: true });
 
 export const returnMultipleUserSchema = returnUserSchemaComplete.array();
