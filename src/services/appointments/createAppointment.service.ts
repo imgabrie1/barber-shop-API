@@ -11,6 +11,7 @@ import {
 import { returnAppointmentSchema } from "../../schemas/appointments.schema";
 import { In, LessThan, MoreThan } from "typeorm";
 import roleEnum from "../../enum/role.enum";
+import { ensureWithinBusinessHours } from "../../utils/appointmentBusinessHours";
 
 const createAppointmentService = async (
   appointmentData: iAppointment,
@@ -53,7 +54,9 @@ const createAppointmentService = async (
   const startDate = new Date(startTime);
   const endDate = new Date(startDate.getTime() + totalDurationMinutes * 60000);
 
-  const conflictingAppointment = await appointmentRepo.findOne({
+  ensureWithinBusinessHours(startDate, endDate);
+
+  const conflictingBarberAppointment = await appointmentRepo.findOne({
     where: {
       barber: { id: barberId },
       startTime: LessThan(endDate),
@@ -61,9 +64,24 @@ const createAppointmentService = async (
     },
   });
 
-  if (conflictingAppointment) {
+  const conflictingClientAppointment = await appointmentRepo.findOne({
+    where: {
+      client: { id: clientId },
+      startTime: LessThan(endDate),
+      endTime: MoreThan(startDate),
+    },
+  });
+
+  if (conflictingBarberAppointment) {
     throw new AppError(
       "O barbeiro já possui um agendamento neste horário",
+      409,
+    );
+  }
+
+  if (conflictingClientAppointment) {
+    throw new AppError(
+      "Você já possui um agendamento neste horário",
       409,
     );
   }

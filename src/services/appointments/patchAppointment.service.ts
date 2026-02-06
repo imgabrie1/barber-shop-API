@@ -6,6 +6,7 @@ import { Service } from "../../entities/services.entity";
 import { AppError } from "../../errors";
 import { iAppointmentReturn } from "../../interfaces/appointments.interface";
 import { returnAppointmentSchema } from "../../schemas/appointments.schema";
+import { ensureWithinBusinessHours } from "../../utils/appointmentBusinessHours";
 
 const patchAppointmentService = async (
   updatedData: any,
@@ -52,6 +53,8 @@ const patchAppointmentService = async (
     ? new Date(updatedData.startTime)
     : oldAppointment.startTime;
   const endTime = new Date(startTime.getTime() + totalDurationMinutes * 60000);
+
+  ensureWithinBusinessHours(startTime, endTime);
 
   const conflictingAppointment = await appointmentRepo.findOne({
     where: {
