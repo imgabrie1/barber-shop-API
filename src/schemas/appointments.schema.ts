@@ -43,7 +43,7 @@ export const returnAppointmentSchema = z.object({
   id: z.string(),
   startTime: z.date().or(z.string()),
   endTime: z.date().or(z.string()),
-  status: z.nativeEnum(appointmentStatusEnum),
+  status: z.enum(appointmentStatusEnum),
   client: returnUserInAppoitments.optional(),
   barber: returnUserInAppoitments.optional(),
   services: z.array(returnServiceSchema)
