@@ -1,12 +1,15 @@
 import z from "zod";
-import { returnUserInAppoitments } from "./users.schema";
+import { returnUserInAppoitments, returnUserSchema } from "./users.schema";
 import { returnServiceSchema } from "./barberServices.schema";
+
+import appointmentStatusEnum from "../enum/appointmentStatus.enum";
 
 export const appointmentBaseSchema = z.object({
   startTime: z.date().or(z.string()),
   endTime: z.date().or(z.string()),
   clientId: z.string().optional(),
   barberId: z.string().optional(),
+  status: z.nativeEnum(appointmentStatusEnum).optional(),
 });
 
 export const createAppointmentSchema = z.object({
@@ -40,6 +43,7 @@ export const returnAppointmentSchema = z.object({
   id: z.string(),
   startTime: z.date().or(z.string()),
   endTime: z.date().or(z.string()),
+  status: z.nativeEnum(appointmentStatusEnum),
   client: returnUserInAppoitments.optional(),
   barber: returnUserInAppoitments.optional(),
   services: z.array(returnServiceSchema)
