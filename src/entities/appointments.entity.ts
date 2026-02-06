@@ -9,11 +9,13 @@ import {
 } from "typeorm";
 import { User } from "./user.entity";
 import { AppointmentService } from "./appointmentServices.entity";
+import appointmentStatusEnum from "../enum/appointmentStatus.enum";
 
 @Entity("appointments")
 @Index("IDX_APPOINTMENT_CLIENT", ["client"])
 @Index("IDX_APPOINTMENT_BARBER", ["barber"])
 @Index("IDX_APPOINTMENT_START_TIME", ["startTime"])
+@Index("IDX_APPOINTMENT_STATUS", ["status"])
 export class Appointment {
   @PrimaryGeneratedColumn("uuid")
   id: string;
@@ -23,6 +25,13 @@ export class Appointment {
 
   @Column({ type: "timestamp" })
   endTime: Date;
+
+  @Column({
+    type: "enum",
+    enum: appointmentStatusEnum,
+    default: appointmentStatusEnum.PENDING,
+  })
+  status: appointmentStatusEnum;
 
   @ManyToOne(() => User, (user) => user.clientAppointments, {
     onDelete: "CASCADE",
