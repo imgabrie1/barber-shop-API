@@ -1,6 +1,7 @@
-import { AppDataSource } from "../../data-source";
-import { Appointment } from "../../entities/appointments.entity";
 import { Between } from "typeorm";
+import { AppDataSource } from "../../../data-source";
+import { Appointment } from "../../../entities/appointments.entity";
+
 
 interface iCheckAvailabilityRequest {
   barberId?: string;

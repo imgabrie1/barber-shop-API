@@ -1,7 +1,8 @@
-import { AppDataSource } from "../../data-source";
-import { Appointment } from "../../entities/appointments.entity";
-import { AppError } from "../../errors";
-import { returnAppointmentSchema } from "../../schemas/appointments.schema";
+import { AppDataSource } from "../../../data-source";
+import { Appointment } from "../../../entities/appointments.entity";
+import { AppError } from "../../../errors";
+import { returnAppointmentSchema } from "../../../schemas/appointments.schema";
+
 
 const getAppointmentByIDservice = async (
   appointmentID: string,

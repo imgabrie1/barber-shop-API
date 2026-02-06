@@ -1,8 +1,8 @@
-import { AppDataSource } from "../../data-source";
-import { Appointment } from "../../entities/appointments.entity";
-import { IPaginationParams } from "../../interfaces/params.interface";
+import { AppDataSource } from "../../../data-source";
+import { Appointment } from "../../../entities/appointments.entity";
+import { IPaginationParams } from "../../../interfaces/params.interface";
 import { Between } from "typeorm";
-import { returnAppointmentSchema } from "../../schemas/appointments.schema";
+import { returnAppointmentSchema } from "../../../schemas/appointments.schema";
 import z from "zod";
 
 interface iGetAppointmentsParams extends IPaginationParams {

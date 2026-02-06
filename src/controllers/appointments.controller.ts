@@ -1,14 +1,16 @@
 import { Request, Response } from "express";
-import createAppointmentService from "../services/appointments/createAppointment.service";
-import { iAppointment } from "../interfaces/appointments.interface";
-import getAppointmentsService from "../services/appointments/getAppointments.service";
-import getAppointmentByIDservice from "../services/appointments/getAppointmentByIDservice.service";
-import { AppError } from "../errors";
-import getMyAppointmentsService from "../services/appointments/getMyAppointments.service";
 import roleEnum from "../enum/role.enum";
+import { AppError } from "../errors";
+import { iAppointment } from "../interfaces/appointments.interface";
+import createAppointmentService from "../services/appointments/createAppointment.service";
 import deleteAppointmentService from "../services/appointments/deleteAppointment.service";
-import checkAvailabilityService from "../services/appointments/checkAvailability.service";
+import checkAvailabilityService from "../services/appointments/get/checkAvailability.service";
+import getAppointmentByIDservice from "../services/appointments/get/getAppointmentByIDservice.service";
+import getAppointmentsService from "../services/appointments/get/getAppointments.service";
+import getMyAppointmentsService from "../services/appointments/get/getMyAppointments.service";
 import patchAppointmentService from "../services/appointments/patchAppointment.service";
+import updateAppointmentStatusService from "../services/appointments/updateAppointmentStatus.service";
+import userCancelAppointmentService from "../services/appointments/userCancelled.service";
 
 export const createAppointmentController = async (
   req: Request,
@@ -23,6 +25,29 @@ export const createAppointmentController = async (
   );
 
   return res.status(201).json(newAppointment);
+};
+
+export const updateAppointmentStatusController = async (
+  req: Request,
+  res: Response,
+): Promise<Response> => {
+  const { id } = req.params;
+  const { status } = req.body;
+  const updated = await updateAppointmentStatusService(id as string, status);
+  return res.status(200).json(updated);
+};
+
+export const userCancelAppointmentController = async (
+  req: Request,
+  res: Response,
+): Promise<Response> => {
+  const { id } = req;
+  const appointmentID = req.params.id;
+  const cancelled = await userCancelAppointmentService(
+    appointmentID as string,
+    id as string,
+  );
+  return res.status(200).json(cancelled);
 };
 
 export const getAppointmentsController = async (

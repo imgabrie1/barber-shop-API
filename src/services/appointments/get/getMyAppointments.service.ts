@@ -1,9 +1,10 @@
-import { AppDataSource } from "../../data-source";
-import { Appointment } from "../../entities/appointments.entity";
-import roleEnum from "../../enum/role.enum";
-import { AppError } from "../../errors";
-import { IPaginationParams } from "../../interfaces/params.interface";
-import { returnAppointmentSchema } from "../../schemas/appointments.schema";
+import { AppDataSource } from "../../../data-source";
+import { Appointment } from "../../../entities/appointments.entity";
+import roleEnum from "../../../enum/role.enum";
+import { AppError } from "../../../errors";
+import { IPaginationParams } from "../../../interfaces/params.interface";
+import { returnAppointmentSchema } from "../../../schemas/appointments.schema";
+
 
 interface IGetMyAppointmentsParams extends IPaginationParams {
   userId: string;
