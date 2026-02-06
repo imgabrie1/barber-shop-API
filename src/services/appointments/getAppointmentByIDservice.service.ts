@@ -1,35 +1,30 @@
 import { AppDataSource } from "../../data-source";
 import { Appointment } from "../../entities/appointments.entity";
 import { AppError } from "../../errors";
+import { returnAppointmentSchema } from "../../schemas/appointments.schema";
 
 const getAppointmentByIDservice = async (
-appointmentID: string,
-): Promise<Appointment | null> => {
+  appointmentID: string,
+): Promise<any | null> => {
   const appointmentRepo = AppDataSource.getRepository(Appointment);
-  const appointment = appointmentRepo
+  const appointment = await appointmentRepo
     .createQueryBuilder("appointment")
-    .leftJoin("appointment.barber", "barber")
-    .leftJoin("appointment.client", "client")
-    .select([
-      "appointment.id",
-      "appointment.startTime",
-      "appointment.endTime",
-
-      "barber.id",
-      "barber.name",
-      "barber.role",
-      "barber.phoneNumber",
-
-      "client.id",
-      "client.name",
-      "client.role",
-      "client.phoneNumber",
-    ])
+    .leftJoinAndSelect("appointment.barber", "barber")
+    .leftJoinAndSelect("appointment.client", "client")
+    .leftJoinAndSelect("appointment.appointmentServices", "as")
+    .leftJoinAndSelect("as.service", "service")
     .where("appointment.id = :appointmentID", { appointmentID })
     .getOne();
+
   if (!appointment) {
     throw new AppError("Agendamento não encontrado", 404);
   }
-  return appointment;
+
+  const formattedAppointment = {
+    ...appointment,
+    services: appointment.appointmentServices.map((as) => as.service),
+  };
+
+  return returnAppointmentSchema.parse(formattedAppointment);
 };
 export default getAppointmentByIDservice;

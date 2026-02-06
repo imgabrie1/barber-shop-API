@@ -22,6 +22,7 @@ export const updateAppointmentSchema = appointmentBaseSchema
   .partial()
   .extend({
     id: z.string().optional(),
+    serviceIds: z.array(z.string()).min(1, "Selecione pelo menos um serviço").optional(),
   })
   .refine(
     (data) => {

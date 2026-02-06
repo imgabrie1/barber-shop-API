@@ -7,6 +7,8 @@ import { AppError } from "../errors";
 import getMyAppointmentsService from "../services/appointments/getMyAppointments.service";
 import roleEnum from "../enum/role.enum";
 import deleteAppointmentService from "../services/appointments/deleteAppointment.service";
+import checkAvailabilityService from "../services/appointments/checkAvailability.service";
+import patchAppointmentService from "../services/appointments/patchAppointment.service";
 
 export const createAppointmentController = async (
   req: Request,
@@ -29,10 +31,13 @@ export const getAppointmentsController = async (
 ): Promise<Response> => {
   const page = Math.max(1, Number(req.query.page) || 1);
   const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 10));
+  const { date, barberId } = req.query;
 
   const appointments = await getAppointmentsService({
     page,
     limit,
+    date: date as string,
+    barberId: barberId as string,
   });
   return res.status(200).json(appointments);
 };
@@ -78,4 +83,31 @@ export const deleteAppointmentController = async (
   await deleteAppointmentService(userID, appointmentID as string);
 
   return res.status(204).send();
+};
+
+export const checkAvailabilityController = async (
+  req: Request,
+  res: Response,
+): Promise<Response> => {
+  const { barberId, date } = req.query;
+
+  const availableSlots = await checkAvailabilityService({
+    barberId: barberId as string,
+    date: date as string,
+  });
+
+  return res.status(200).json(availableSlots);
+};
+
+export const patchAppointmentController = async (
+  req: Request,
+  res: Response,
+): Promise<Response> => {
+  const { id } = req.params;
+
+  let updatedData = { ...req.body };
+
+  const appointment = await patchAppointmentService(updatedData, id as string);
+
+  return res.status(200).json(appointment);
 };
