@@ -4,6 +4,11 @@ import { IPaginationParams } from "../../../interfaces/params.interface";
 import { Between } from "typeorm";
 import { returnAppointmentSchema } from "../../../schemas/appointments.schema";
 import z from "zod";
+import {
+  APP_TIME_ZONE,
+  formatDateTimeInTimeZone,
+  getUtcRangeForLocalDate,
+} from "../../../utils/timezone";
 
 interface iGetAppointmentsParams extends IPaginationParams {
   date?: string;
@@ -35,11 +40,10 @@ const getAppointmentsService = async ({
   }
 
   if (date) {
-    const startOfDay = new Date(`${date}T00:00:00`);
-    const endOfDay = new Date(`${date}T23:59:59`);
+    const { start, end } = getUtcRangeForLocalDate(date, APP_TIME_ZONE);
     queryBuilder.andWhere("appointment.startTime BETWEEN :start AND :end", {
-      start: startOfDay,
-      end: endOfDay,
+      start,
+      end,
     });
   }
 
@@ -52,6 +56,8 @@ const getAppointmentsService = async ({
   const formattedAppointments = appointments.map((app) => {
     const obj = {
       ...app,
+      startTime: formatDateTimeInTimeZone(app.startTime, APP_TIME_ZONE),
+      endTime: formatDateTimeInTimeZone(app.endTime, APP_TIME_ZONE),
       services: app.appointmentServices.map((as) => as.service),
     };
     return returnAppointmentSchema.parse(obj);

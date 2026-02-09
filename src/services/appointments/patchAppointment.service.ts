@@ -7,10 +7,16 @@ import { AppError } from "../../errors";
 import { iAppointmentReturn } from "../../interfaces/appointments.interface";
 import { returnAppointmentSchema } from "../../schemas/appointments.schema";
 import { ensureWithinBusinessHours } from "../../utils/appointmentBusinessHours";
+import {
+  APP_TIME_ZONE,
+  formatDateTimeInTimeZone,
+  toUtcDate,
+} from "../../utils/timezone";
 
 const patchAppointmentService = async (
   updatedData: any,
   appointmentID: string,
+  userID: string,
 ): Promise<iAppointmentReturn> => {
   const result = await AppDataSource.transaction(
     async (transactionalEntityManager) => {
@@ -27,6 +33,13 @@ const patchAppointmentService = async (
 
       if (!oldAppointment) {
         throw new AppError("Agendamento não encontrado", 404);
+      }
+
+      if (
+        oldAppointment.client.id !== userID &&
+        oldAppointment.barber.id !== userID
+      ) {
+        throw new AppError("Tu nem podia tá aqui...", 403);
       }
 
       let services: Service[] = [];
@@ -53,7 +66,7 @@ const patchAppointmentService = async (
       );
 
       const startTime = updatedData.startTime
-        ? new Date(updatedData.startTime)
+        ? toUtcDate(updatedData.startTime, APP_TIME_ZONE)
         : oldAppointment.startTime;
       const endTime = new Date(
         startTime.getTime() + totalDurationMinutes * 60000,
@@ -98,6 +111,8 @@ const patchAppointmentService = async (
 
       return {
         ...oldAppointment,
+        startTime: formatDateTimeInTimeZone(oldAppointment.startTime, APP_TIME_ZONE),
+        endTime: formatDateTimeInTimeZone(oldAppointment.endTime, APP_TIME_ZONE),
         services: services,
       };
     },

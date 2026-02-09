@@ -2,6 +2,7 @@ import { AppDataSource } from "../../../data-source";
 import { Appointment } from "../../../entities/appointments.entity";
 import { AppError } from "../../../errors";
 import { returnAppointmentSchema } from "../../../schemas/appointments.schema";
+import { APP_TIME_ZONE, formatDateTimeInTimeZone } from "../../../utils/timezone";
 
 
 const getAppointmentByIDservice = async (
@@ -23,6 +24,8 @@ const getAppointmentByIDservice = async (
 
   const formattedAppointment = {
     ...appointment,
+    startTime: formatDateTimeInTimeZone(appointment.startTime, APP_TIME_ZONE),
+    endTime: formatDateTimeInTimeZone(appointment.endTime, APP_TIME_ZONE),
     services: appointment.appointmentServices.map((as) => as.service),
   };
 
