@@ -4,6 +4,7 @@ import roleEnum from "../../../enum/role.enum";
 import { AppError } from "../../../errors";
 import { IPaginationParams } from "../../../interfaces/params.interface";
 import { returnAppointmentSchema } from "../../../schemas/appointments.schema";
+import { APP_TIME_ZONE, formatDateTimeInTimeZone } from "../../../utils/timezone";
 
 
 interface IGetMyAppointmentsParams extends IPaginationParams {
@@ -61,6 +62,8 @@ const getMyAppointmentsService = async ({
   const formattedAppointments = appointments.map((app) => {
     const obj = {
       ...app,
+      startTime: formatDateTimeInTimeZone(app.startTime, APP_TIME_ZONE),
+      endTime: formatDateTimeInTimeZone(app.endTime, APP_TIME_ZONE),
       services: app.appointmentServices.map((as) => as.service),
     };
     return returnAppointmentSchema.parse(obj);

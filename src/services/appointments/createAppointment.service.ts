@@ -12,6 +12,11 @@ import { returnAppointmentSchema } from "../../schemas/appointments.schema";
 import { In, LessThan, MoreThan } from "typeorm";
 import roleEnum from "../../enum/role.enum";
 import { ensureWithinBusinessHours } from "../../utils/appointmentBusinessHours";
+import {
+  APP_TIME_ZONE,
+  formatDateTimeInTimeZone,
+  toUtcDate,
+} from "../../utils/timezone";
 
 const createAppointmentService = async (
   appointmentData: iAppointment,
@@ -51,7 +56,7 @@ const createAppointmentService = async (
       0,
     );
 
-    const startDate = new Date(startTime);
+    const startDate = toUtcDate(startTime, APP_TIME_ZONE);
     const endDate = new Date(startDate.getTime() + totalDurationMinutes * 60000);
 
     ensureWithinBusinessHours(startDate, endDate);
@@ -112,7 +117,11 @@ const createAppointmentService = async (
     };
   });
 
-  return returnAppointmentSchema.parse(result);
+  return returnAppointmentSchema.parse({
+    ...result,
+    startTime: formatDateTimeInTimeZone(result.startTime, APP_TIME_ZONE),
+    endTime: formatDateTimeInTimeZone(result.endTime, APP_TIME_ZONE),
+  });
 };
 
 export default createAppointmentService;

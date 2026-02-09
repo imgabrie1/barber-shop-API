@@ -102,10 +102,10 @@ export const deleteAppointmentController = async (
   req: Request,
   res: Response,
 ): Promise<Response> => {
-  const appointmentID = req.params.appointmentID;
+  const appointmentID = req.params.appointmentID as string;
   const userID = req.id;
 
-  await deleteAppointmentService(userID, appointmentID as string);
+  await deleteAppointmentService(userID, appointmentID);
 
   return res.status(204).send();
 };
@@ -114,12 +114,51 @@ export const checkAvailabilityController = async (
   req: Request,
   res: Response,
 ): Promise<Response> => {
-  const { barberId, date } = req.query;
+  const { barberId, date, serviceIds, durationMinutes, slotMinutes } = req.query;
 
-  const availableSlots = await checkAvailabilityService({
+  let normalizedServiceIds: string[] | undefined;
+  if (Array.isArray(serviceIds)) {
+    normalizedServiceIds = serviceIds.map(String).filter(Boolean);
+  } else if (typeof serviceIds === "string") {
+    normalizedServiceIds = serviceIds
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean);
+  }
+
+  const parsedDurationMinutes =
+    typeof durationMinutes === "string" && durationMinutes.trim() !== ""
+      ? Number(durationMinutes)
+      : undefined;
+  const parsedSlotMinutes =
+    typeof slotMinutes === "string" && slotMinutes.trim() !== ""
+      ? Number(slotMinutes)
+      : undefined;
+
+  const availabilityRequest: {
+    barberId?: string;
+    date?: string;
+    serviceIds?: string[];
+    durationMinutes?: number;
+    slotMinutes?: number;
+  } = {
     barberId: barberId as string,
     date: date as string,
-  });
+  };
+
+  if (normalizedServiceIds && normalizedServiceIds.length > 0) {
+    availabilityRequest.serviceIds = normalizedServiceIds;
+  }
+
+  if (parsedDurationMinutes !== undefined && Number.isFinite(parsedDurationMinutes)) {
+    availabilityRequest.durationMinutes = parsedDurationMinutes;
+  }
+
+  if (parsedSlotMinutes !== undefined && Number.isFinite(parsedSlotMinutes)) {
+    availabilityRequest.slotMinutes = parsedSlotMinutes;
+  }
+
+  const availableSlots = await checkAvailabilityService(availabilityRequest);
 
   return res.status(200).json(availableSlots);
 };
@@ -128,11 +167,13 @@ export const patchAppointmentController = async (
   req: Request,
   res: Response,
 ): Promise<Response> => {
-  const { id } = req.params;
+  const appointmentID = req.params.id as string;
+
+  const { id } = req
 
   let updatedData = { ...req.body };
 
-  const appointment = await patchAppointmentService(updatedData, id as string);
+  const appointment = await patchAppointmentService(updatedData, appointmentID, id as string);
 
   return res.status(200).json(appointment);
 };
