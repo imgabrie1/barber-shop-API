@@ -61,9 +61,8 @@ const patchAppointmentService = async (
 
       ensureWithinBusinessHours(startTime, endTime);
 
-      const conflict = await appointmentRepo
-        .createQueryBuilder("appointment")
-        .setEntityManager(transactionalEntityManager) // Usar o manager da transação
+      const conflict = await transactionalEntityManager
+        .createQueryBuilder(Appointment, "appointment")
         .where("appointment.barber_id = :barberId", {
           barberId: oldAppointment.barber.id,
         })
