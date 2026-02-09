@@ -26,14 +26,10 @@ const refreshTokenService = async (
     throw new AppError("Refresh token inválido", 401);
   }
 
-  const newToken = jwt.sign(
-    { role: user.role === "admin" },
-    process.env.SECRET_KEY!,
-    {
-      expiresIn: "24h", // mudar 15m depois em prod
-      subject: String(user.id),
-    },
-  );
+  const newToken = jwt.sign({ role: user.role }, process.env.SECRET_KEY!, {
+    expiresIn: "24h", // mudar 15m depois em prod
+    subject: String(user.id),
+  });
 
   const newRefreshToken = jwt.sign(
     { role: user.role },

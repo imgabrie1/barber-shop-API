@@ -3,6 +3,7 @@ import { Appointment } from "../../entities/appointments.entity";
 import appointmentStatusEnum from "../../enum/appointmentStatus.enum";
 import { AppError } from "../../errors";
 import { returnAppointmentSchema } from "../../schemas/appointments.schema";
+import { APP_TIME_ZONE, formatDateTimeInTimeZone } from "../../utils/timezone";
 
 const updateAppointmentStatusService = async (
   appointmentID: string,
@@ -56,6 +57,8 @@ const updateAppointmentStatusService = async (
 
   const formattedAppointment = {
     ...appointment,
+    startTime: formatDateTimeInTimeZone(appointment.startTime, APP_TIME_ZONE),
+    endTime: formatDateTimeInTimeZone(appointment.endTime, APP_TIME_ZONE),
     services: appointment.appointmentServices.map((as) => as.service),
   };
 
