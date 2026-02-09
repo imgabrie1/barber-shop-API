@@ -36,7 +36,7 @@ const refreshTokenService = async (
   );
 
   const newRefreshToken = jwt.sign(
-    { role: user.role === "admin" },
+    { role: user.role },
     process.env.SECRET_KEY!,
     {
       expiresIn: "7d", // mudar pra 7d em prod
