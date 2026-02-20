@@ -7,6 +7,7 @@ import patchUserService from "../services/users/patchUser.service";
 import getUsersService from "../services/users/getUsers.service";
 import deleteUserService from "../services/users/deleteUser.service";
 import getUserByIDservice from "../services/users/getUserByID.service";
+import getBarbersService from "../services/barberServices/getBarbers.service";
 
 export const createUserController = async (
   req: Request,
@@ -52,6 +53,14 @@ export const getUsersController = async (
 ): Promise<Response> => {
   const users = await getUsersService();
   return res.status(200).json(users);
+};
+
+export const getBarbersController = async (
+  req: Request,
+  res: Response,
+): Promise<Response> => {
+  const barbers = await getBarbersService();
+  return res.status(200).json(barbers);
 };
 
 export const getUserByIDcontroller = async (
