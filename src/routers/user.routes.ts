@@ -5,6 +5,7 @@ import {
   adminDeleteUserController,
   autoDeleteUserController,
   createUserController,
+  getBarbersController,
   getUserByIDcontroller,
   getUsersController,
   patchUserController,
@@ -32,6 +33,12 @@ userRoutes.get(
   ensureUserIsAuthenticatedMiddleware,
   ensureIsAdminOrBarberMiddleware,
   getUsersController,
+);
+
+userRoutes.get(
+  "/barber",
+  ensureUserIsAuthenticatedMiddleware,
+  getBarbersController,
 );
 
 userRoutes.get(
