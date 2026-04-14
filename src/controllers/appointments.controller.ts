@@ -33,22 +33,18 @@ export const updateAppointmentStatusController = async (
 ): Promise<Response> => {
   const { id } = req.params;
   const { status } = req.body;
-  const updated = await updateAppointmentStatusService(id as string, status);
+  const userID = req.id;
+  const userRole = req.role;
+  const updated = await updateAppointmentStatusService(
+    id as string,
+    status,
+    userID,
+    userRole,
+  );
   return res.status(200).json(updated);
 };
 
-export const userCancelAppointmentController = async (
-  req: Request,
-  res: Response,
-): Promise<Response> => {
-  const { id } = req;
-  const appointmentID = req.params.id;
-  const cancelled = await userCancelAppointmentService(
-    appointmentID as string,
-    id as string,
-  );
-  return res.status(200).json(cancelled);
-};
+
 
 export const getAppointmentsController = async (
   req: Request,
@@ -114,7 +110,8 @@ export const checkAvailabilityController = async (
   req: Request,
   res: Response,
 ): Promise<Response> => {
-  const { barberId, date, serviceIds, durationMinutes, slotMinutes } = req.query;
+  const { barberId, date, serviceIds, durationMinutes, slotMinutes } =
+    req.query;
 
   let normalizedServiceIds: string[] | undefined;
   if (Array.isArray(serviceIds)) {
@@ -150,7 +147,10 @@ export const checkAvailabilityController = async (
     availabilityRequest.serviceIds = normalizedServiceIds;
   }
 
-  if (parsedDurationMinutes !== undefined && Number.isFinite(parsedDurationMinutes)) {
+  if (
+    parsedDurationMinutes !== undefined &&
+    Number.isFinite(parsedDurationMinutes)
+  ) {
     availabilityRequest.durationMinutes = parsedDurationMinutes;
   }
 
@@ -169,11 +169,15 @@ export const patchAppointmentController = async (
 ): Promise<Response> => {
   const appointmentID = req.params.id as string;
 
-  const { id } = req
+  const { id } = req;
 
   let updatedData = { ...req.body };
 
-  const appointment = await patchAppointmentService(updatedData, appointmentID, id as string);
+  const appointment = await patchAppointmentService(
+    updatedData,
+    appointmentID,
+    id as string,
+  );
 
   return res.status(200).json(appointment);
 };

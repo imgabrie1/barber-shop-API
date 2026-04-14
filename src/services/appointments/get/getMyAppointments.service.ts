@@ -4,8 +4,10 @@ import roleEnum from "../../../enum/role.enum";
 import { AppError } from "../../../errors";
 import { IPaginationParams } from "../../../interfaces/params.interface";
 import { returnAppointmentSchema } from "../../../schemas/appointments.schema";
-import { APP_TIME_ZONE, formatDateTimeInTimeZone } from "../../../utils/timezone";
-
+import {
+  APP_TIME_ZONE,
+  formatDateTimeInTimeZone,
+} from "../../../utils/timezone";
 
 interface IGetMyAppointmentsParams extends IPaginationParams {
   userId: string;
@@ -36,21 +38,12 @@ const getMyAppointmentsService = async ({
     throw new AppError("Usuário não autenticado", 401);
   }
 
-  switch (role) {
-    case roleEnum.CLIENT:
-      qb.where("client.id = :userId", { userId });
-      break;
+  if (role === roleEnum.CLIENT) {
+    qb.where("client.id = :userId", { userId });
+  }
 
-    case roleEnum.BARBER:
-      qb.where("barber.id = :userId", { userId });
-      break;
-
-    case roleEnum.ADMIN:
-      qb.where("client.id = :userId OR barber.id = :userId", { userId });
-      break;
-
-    default:
-      throw new AppError("Acesso negado", 403);
+  if (role === roleEnum.BARBER) {
+    qb.where("barber.id = :userId", { userId });
   }
 
   const [appointments, total] = await qb
