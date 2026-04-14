@@ -70,4 +70,12 @@ appointmentsRoutes.patch(
   userCancelAppointmentController,
 );
 
+appointmentsRoutes.delete(
+  "/delete/:id",
+  ensureUserIsAuthenticatedMiddleware,
+  deleteAppointmentController,
+);
+
+
+
 export default appointmentsRoutes;
