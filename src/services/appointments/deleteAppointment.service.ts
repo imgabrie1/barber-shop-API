@@ -30,7 +30,9 @@ const deleteAppointmentService = async (
   const isBarber = appointment.barber.id === userID;
   const isAdmin = user.role === roleEnum.ADMIN;
 
-  if (!isOwner && !isBarber && !isAdmin) {
+  const hasPermission = isOwner || isBarber || isAdmin;
+
+  if (!hasPermission) {
     throw new AppError("Sem permissão para deletar este agendamento", 403);
   }
 

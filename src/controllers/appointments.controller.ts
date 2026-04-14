@@ -102,7 +102,7 @@ export const deleteAppointmentController = async (
   req: Request,
   res: Response,
 ): Promise<Response> => {
-  const appointmentID = req.params.appointmentID as string;
+  const appointmentID = req.params.id as string;
   const userID = req.id;
 
   await deleteAppointmentService(userID, appointmentID);
