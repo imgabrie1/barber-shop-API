@@ -6,6 +6,7 @@ import loginRoutes from "./routers/login.routes";
 import userRoutes from "./routers/user.routes";
 import serviceRoutes from "./routers/services.routes";
 import appointmentsRoutes from "./routers/appointments.routes";
+import adminRoutes from "./routers/admin.routes";
 
 const app: Application = express();
 
@@ -18,6 +19,7 @@ app.use("/login", loginRoutes);
 app.use("/user", userRoutes);
 app.use("/service", serviceRoutes);
 app.use("/appointment", appointmentsRoutes);
+app.use("/admin", adminRoutes);
 
 app.get("/health", (_, res) => {
   res.status(200).send("ok");
