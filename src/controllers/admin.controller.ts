@@ -6,6 +6,12 @@ export const getRevenueController = async (
   request: Request,
   response: Response,
 ): Promise<Response> => {
-  const totalRevenue = await getRevenueService();
-  return response.status(200).json({ totalRevenue });
+  const { filterType, filterValue } = request.query;
+
+  const revenue = await getRevenueService(
+    filterType as "day" | "month" | "quarter",
+    filterValue as string
+  );
+
+  return response.status(200).json(revenue);
 };
