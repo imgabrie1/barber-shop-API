@@ -25,6 +25,7 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.17.2",
+    "reflect-metadata": "^0.2.2",
     "typeorm": "^0.3.28",
     "zod": "^4.3.5"
   },

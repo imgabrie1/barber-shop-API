@@ -61,7 +61,6 @@ appointmentsRoutes.patch(
 appointmentsRoutes.patch(
   "/status/:id",
   ensureUserIsAuthenticatedMiddleware,
-  ensureIsAdminOrBarberMiddleware,
   updateAppointmentStatusController,
 );
 appointmentsRoutes.patch(
@@ -75,7 +74,5 @@ appointmentsRoutes.delete(
   ensureUserIsAuthenticatedMiddleware,
   deleteAppointmentController,
 );
-
-
 
 export default appointmentsRoutes;

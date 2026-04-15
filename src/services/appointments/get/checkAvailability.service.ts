@@ -4,7 +4,11 @@ import { Appointment } from "../../../entities/appointments.entity";
 import { Service } from "../../../entities/services.entity";
 import appointmentStatusEnum from "../../../enum/appointmentStatus.enum";
 import { AppError } from "../../../errors";
-import { BUSINESS_END_MINUTES, BUSINESS_START_MINUTES, ensureWithinBusinessHours } from "../../../utils/appointmentBusinessHours";
+import {
+  BUSINESS_END_MINUTES,
+  BUSINESS_START_MINUTES,
+  ensureWithinBusinessHours,
+} from "../../../utils/appointmentBusinessHours";
 import {
   APP_TIME_ZONE,
   formatTimeInTimeZone,
@@ -12,10 +16,9 @@ import {
   toUtcDate,
 } from "../../../utils/timezone";
 
-
 interface iCheckAvailabilityRequest {
   barberId?: string;
-  date?: string; // yyyy-mm-dd
+  date?: string;
   serviceIds?: string[];
   durationMinutes?: number;
   slotMinutes?: number;
@@ -90,13 +93,16 @@ const checkAvailabilityService = async ({
 
   const totalBusinessMinutes = BUSINESS_END_MINUTES - BUSINESS_START_MINUTES;
   if (totalDurationMinutes > totalBusinessMinutes) {
-    throw new AppError(
-      "Duração do serviço excede o horário comercial",
-      400,
-    );
+    throw new AppError("Duração do serviço excede o horário comercial", 400);
   }
 
-  const dayStartLocal = `${date}T08:00`;
+  const startHour = Math.floor(BUSINESS_START_MINUTES / 60)
+    .toString()
+    .padStart(2, "0");
+
+  const startMinute = (BUSINESS_START_MINUTES % 60).toString().padStart(2, "0");
+
+  const dayStartLocal = `${date}T${startHour}:${startMinute}`;
   const firstSlotStart = toUtcDate(dayStartLocal, APP_TIME_ZONE);
   const firstSlotEnd = new Date(
     firstSlotStart.getTime() + totalDurationMinutes * 60000,
