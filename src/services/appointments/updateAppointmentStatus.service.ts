@@ -1,5 +1,6 @@
 import { AppDataSource } from "../../data-source";
 import { Appointment } from "../../entities/appointments.entity";
+import { AppointmentRevenue } from "../../entities/appointmentRevenue.entity";
 import appointmentStatusEnum from "../../enum/appointmentStatus.enum";
 import { AppError } from "../../errors";
 import { returnAppointmentSchema } from "../../schemas/appointments.schema";
@@ -52,8 +53,36 @@ const updateAppointmentStatusService = async (
     );
   }
 
-  appointment.status = newStatus;
-  await appointmentRepo.save(appointment);
+  await AppDataSource.manager.transaction(async (transactionalEntityManager) => {
+    appointment.status = newStatus;
+    await transactionalEntityManager.save(appointment);
+
+    if (newStatus === appointmentStatusEnum.COMPLETED && currentStatus !== appointmentStatusEnum.COMPLETED) {
+      const appointmentRevenueRepo = transactionalEntityManager.getRepository(AppointmentRevenue);
+
+      for (const appointmentService of appointment.appointmentServices) {
+        const price = Number(appointmentService.service.price);
+        const quantity = 1;
+        const totalServiceRevenue = price * quantity;
+
+        const newAppointmentRevenue = appointmentRevenueRepo.create({
+          appointmentId_original: appointment.id,
+          appointmentStartTime: appointment.startTime,
+          appointmentEndTime: appointment.endTime,
+          serviceId_original: appointmentService.service.id,
+          serviceName: appointmentService.service.name,
+          priceAtCompletion: price,
+          quantity: quantity,
+          totalServiceRevenue: totalServiceRevenue,
+          barberId_original: appointment.barber.id,
+          barberName: appointment.barber.name,
+          clientId_original: appointment.client.id,
+        });
+        await transactionalEntityManager.save(newAppointmentRevenue);
+      }
+    }
+  });
+
 
   const formattedAppointment = {
     ...appointment,
@@ -64,5 +93,6 @@ const updateAppointmentStatusService = async (
 
   return returnAppointmentSchema.parse(formattedAppointment);
 };
+
 
 export default updateAppointmentStatusService;
