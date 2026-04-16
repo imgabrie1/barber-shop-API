@@ -7,6 +7,62 @@ interface RevenueResult {
   filteredRevenue: number;
 }
 
+interface ValidationResult {
+  isValid: boolean;
+  error?: string;
+}
+
+const validateFilterInput = (
+  filterType: string,
+  filterValue: string,
+): ValidationResult => {
+  if (!filterValue) {
+    return {
+      isValid: false,
+      error: "filterValue é obrigatório quando filterType é fornecido",
+    };
+  }
+
+  if (filterType === "day") {
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(filterValue)) {
+      return {
+        isValid: false,
+        error: "Formato de dia inválido. Use: YYYY-MM-DD",
+      };
+    }
+    const date = new Date(filterValue);
+    if (isNaN(date.getTime())) {
+      return { isValid: false, error: "Data inválida" };
+    }
+  } else if (filterType === "month") {
+    const monthRegex = /^\d{4}-\d{2}$/;
+    if (!monthRegex.test(filterValue)) {
+      return { isValid: false, error: "Formato de mês inválido. Use: YYYY-MM" };
+    }
+    const [year, month] = filterValue.split("-").map(Number);
+    if (month < 1 || month > 12) {
+      return { isValid: false, error: "Mês deve estar entre 01 e 12" };
+    }
+  } else if (filterType === "quarter") {
+    const quarterRegex = /^\d{4}-Q[1-4]$/;
+    if (!quarterRegex.test(filterValue)) {
+      return {
+        isValid: false,
+        error:
+          "Formato de trimestre inválido. Use: YYYY-Q1, YYYY-Q2, YYYY-Q3 ou YYYY-Q4",
+      };
+    }
+  } else {
+    return {
+      isValid: false,
+      error: "filterType deve ser: day, month ou quarter",
+    };
+  }
+
+  return { isValid: true };
+};
+
 const getStartOfDay = (date: Date): Date => {
   const start = new Date(date);
   start.setHours(0, 0, 0, 0);
@@ -53,9 +109,17 @@ const getEndOfQuarter = (date: Date): Date => {
 
 const getRevenueService = async (
   filterType?: "day" | "month" | "quarter",
-  filterValue?: string
+  filterValue?: string,
 ): Promise<RevenueResult> => {
-  const appointmentRevenueRepo = AppDataSource.getRepository(AppointmentRevenue);
+  const appointmentRevenueRepo =
+    AppDataSource.getRepository(AppointmentRevenue);
+
+  if (filterType) {
+    const validation = validateFilterInput(filterType, filterValue || "");
+    if (!validation.isValid) {
+      throw new Error(validation.error);
+    }
+  }
 
   let startDate: Date | undefined;
   let endDate: Date | undefined;
@@ -70,7 +134,7 @@ const getRevenueService = async (
         endDate = getEndOfDay(baseDate);
       }
     } else if (filterType === "month") {
-      const [year, month] = filterValue.split('-').map(Number);
+      const [year, month] = filterValue.split("-").map(Number);
       if (year && month) {
         baseDate = new Date(year, month - 1);
         if (!isNaN(baseDate.getTime())) {
@@ -79,10 +143,10 @@ const getRevenueService = async (
         }
       }
     } else if (filterType === "quarter") {
-      const [yearStr, quarterStr] = filterValue.split('-Q');
+      const [yearStr, quarterStr] = filterValue.split("-Q");
       const year = Number(yearStr);
       const quarter = Number(quarterStr);
-      if (year && quarter) {
+      if (year && quarter && quarter >= 1 && quarter <= 4) {
         baseDate = new Date(year, (quarter - 1) * 3);
         if (!isNaN(baseDate.getTime())) {
           startDate = getStartOfQuarter(baseDate);
@@ -92,16 +156,20 @@ const getRevenueService = async (
     }
   }
 
-  const totalRevenue = await appointmentRevenueRepo.sum('totalServiceRevenue');
+  const totalRevenue = await appointmentRevenueRepo.sum("totalServiceRevenue");
 
   let filteredRevenue = 0;
   if (startDate && endDate) {
-    const revenuesForFilter = await appointmentRevenueRepo.find({
-      where: {
-        recordedAt: Between(startDate, endDate),
-      },
-    });
-    filteredRevenue = revenuesForFilter.reduce((sum, record) => sum + Number(record.totalServiceRevenue), 0);
+    const result = await appointmentRevenueRepo
+      .createQueryBuilder("revenue")
+      .select("SUM(revenue.totalServiceRevenue)", "total")
+      .where("revenue.recordedAt BETWEEN :startDate AND :endDate", {
+        startDate,
+        endDate,
+      })
+      .getRawOne();
+
+    filteredRevenue = result?.total ? Number(result.total) : 0;
   } else {
     filteredRevenue = totalRevenue || 0;
   }
