@@ -1,6 +1,5 @@
 import { AppDataSource } from "../../data-source";
 import { AppointmentRevenue } from "../../entities/appointmentRevenue.entity";
-import { Between } from "typeorm";
 
 interface RevenueResult {
   totalRevenue: number;
@@ -31,16 +30,12 @@ const validateFilterInput = (
         error: "Formato de dia inválido. Use: YYYY-MM-DD",
       };
     }
-    const date = new Date(filterValue);
-    if (isNaN(date.getTime())) {
-      return { isValid: false, error: "Data inválida" };
-    }
   } else if (filterType === "month") {
     const monthRegex = /^\d{4}-\d{2}$/;
     if (!monthRegex.test(filterValue)) {
       return { isValid: false, error: "Formato de mês inválido. Use: YYYY-MM" };
     }
-    const [year, month] = filterValue.split("-").map(Number);
+    const [, month] = filterValue.split("-").map(Number);
     if (month < 1 || month > 12) {
       return { isValid: false, error: "Mês deve estar entre 01 e 12" };
     }
@@ -127,36 +122,45 @@ const getRevenueService = async (
   if (filterType && filterValue) {
     let baseDate: Date | undefined;
 
+
     if (filterType === "day") {
-      baseDate = new Date(filterValue);
+      const [year, month, day] = filterValue.split("-").map(Number);
+      baseDate = new Date(year, month - 1, day);
+
       if (!isNaN(baseDate.getTime())) {
         startDate = getStartOfDay(baseDate);
         endDate = getEndOfDay(baseDate);
       }
     } else if (filterType === "month") {
       const [year, month] = filterValue.split("-").map(Number);
-      if (year && month) {
-        baseDate = new Date(year, month - 1);
-        if (!isNaN(baseDate.getTime())) {
-          startDate = getStartOfMonth(baseDate);
-          endDate = getEndOfMonth(baseDate);
-        }
+      baseDate = new Date(year, month - 1, 1);
+
+      if (!isNaN(baseDate.getTime())) {
+        startDate = getStartOfMonth(baseDate);
+        endDate = getEndOfMonth(baseDate);
       }
     } else if (filterType === "quarter") {
       const [yearStr, quarterStr] = filterValue.split("-Q");
       const year = Number(yearStr);
       const quarter = Number(quarterStr);
-      if (year && quarter && quarter >= 1 && quarter <= 4) {
-        baseDate = new Date(year, (quarter - 1) * 3);
-        if (!isNaN(baseDate.getTime())) {
-          startDate = getStartOfQuarter(baseDate);
-          endDate = getEndOfQuarter(baseDate);
-        }
+
+      baseDate = new Date(year, (quarter - 1) * 3, 1);
+
+      if (!isNaN(baseDate.getTime())) {
+        startDate = getStartOfQuarter(baseDate);
+        endDate = getEndOfQuarter(baseDate);
       }
     }
   }
 
-  const totalRevenue = await appointmentRevenueRepo.sum("totalServiceRevenue");
+  const totalRevenueResult = await appointmentRevenueRepo
+    .createQueryBuilder("revenue")
+    .select("SUM(revenue.totalServiceRevenue)", "total")
+    .getRawOne();
+
+  const totalRevenue = totalRevenueResult?.total
+    ? Number(totalRevenueResult.total)
+    : 0;
 
   let filteredRevenue = 0;
   if (startDate && endDate) {
@@ -171,10 +175,10 @@ const getRevenueService = async (
 
     filteredRevenue = result?.total ? Number(result.total) : 0;
   } else {
-    filteredRevenue = totalRevenue || 0;
+    filteredRevenue = totalRevenue;
   }
 
-  return { totalRevenue: totalRevenue || 0, filteredRevenue };
+  return { totalRevenue, filteredRevenue };
 };
 
 export default getRevenueService;
