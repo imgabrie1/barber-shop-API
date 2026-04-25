@@ -54,11 +54,5 @@ userRoutes.delete(
   autoDeleteUserController,
 );
 
-userRoutes.delete(
-  "",
-  ensureUserIsAuthenticatedMiddleware,
-  ensureIsAdminMiddleware,
-  adminDeleteUserController,
-);
 
 export default userRoutes;
