@@ -1,6 +1,6 @@
 import { AppDataSource } from "../../data-source";
 import { AppointmentRevenue } from "../../entities/appointmentRevenue.entity";
-import { Between } from "typeorm";
+import { getUtcRangeForLocalDate, APP_TIME_ZONE } from "../../utils/timezone";
 
 interface RevenueResult {
   totalRevenue: number;
@@ -31,16 +31,12 @@ const validateFilterInput = (
         error: "Formato de dia inválido. Use: YYYY-MM-DD",
       };
     }
-    const date = new Date(filterValue);
-    if (isNaN(date.getTime())) {
-      return { isValid: false, error: "Data inválida" };
-    }
   } else if (filterType === "month") {
     const monthRegex = /^\d{4}-\d{2}$/;
     if (!monthRegex.test(filterValue)) {
       return { isValid: false, error: "Formato de mês inválido. Use: YYYY-MM" };
     }
-    const [year, month] = filterValue.split("-").map(Number);
+    const [, month] = filterValue.split("-").map(Number);
     if (month < 1 || month > 12) {
       return { isValid: false, error: "Mês deve estar entre 01 e 12" };
     }
@@ -63,48 +59,45 @@ const validateFilterInput = (
   return { isValid: true };
 };
 
-const getStartOfDay = (date: Date): Date => {
-  const start = new Date(date);
-  start.setHours(0, 0, 0, 0);
-  return start;
+const getUtcRangeForMonth = (
+  filterValue: string,
+  timeZone = APP_TIME_ZONE,
+): { start: Date; end: Date } => {
+  const [yearStr, monthStr] = filterValue.split("-");
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+
+  const startOfMonthLocal = `${year}-${String(month).padStart(2, "0")}-01`;
+  const start = getUtcRangeForLocalDate(startOfMonthLocal, timeZone).start;
+
+  const endOfMonthLocal = new Date(year, month, 0).toISOString().split("T")[0];
+  const end = getUtcRangeForLocalDate(endOfMonthLocal, timeZone).end;
+
+  return { start, end };
 };
 
-const getEndOfDay = (date: Date): Date => {
-  const end = new Date(date);
-  end.setHours(23, 59, 59, 999);
-  return end;
-};
+const getUtcRangeForQuarter = (
+  filterValue: string,
+  timeZone = APP_TIME_ZONE,
+): { start: Date; end: Date } => {
+  const [yearStr, quarterStr] = filterValue.split("-Q");
+  const year = Number(yearStr);
+  const quarter = Number(quarterStr);
 
-const getStartOfMonth = (date: Date): Date => {
-  const start = new Date(date);
-  start.setDate(1);
-  start.setHours(0, 0, 0, 0);
-  return start;
-};
+  const firstMonthOfQuarter = (quarter - 1) * 3 + 1;
+  const startOfMonthLocal = `${year}-${String(firstMonthOfQuarter).padStart(
+    2,
+    "0",
+  )}-01`;
+  const start = getUtcRangeForLocalDate(startOfMonthLocal, timeZone).start;
 
-const getEndOfMonth = (date: Date): Date => {
-  const end = new Date(date);
-  end.setMonth(end.getMonth() + 1, 0);
-  end.setHours(23, 59, 59, 999);
-  return end;
-};
+  const lastMonthOfQuarter = quarter * 3;
+  const endOfMonthLocal = new Date(year, lastMonthOfQuarter, 0)
+    .toISOString()
+    .split("T")[0];
+  const end = getUtcRangeForLocalDate(endOfMonthLocal, timeZone).end;
 
-const getStartOfQuarter = (date: Date): Date => {
-  const start = new Date(date);
-  const month = start.getMonth();
-  const quarterMonth = month - (month % 3);
-  start.setMonth(quarterMonth, 1);
-  start.setHours(0, 0, 0, 0);
-  return start;
-};
-
-const getEndOfQuarter = (date: Date): Date => {
-  const end = new Date(date);
-  const month = end.getMonth();
-  const quarterMonth = month - (month % 3);
-  end.setMonth(quarterMonth + 3, 0);
-  end.setHours(23, 59, 59, 999);
-  return end;
+  return { start, end };
 };
 
 const getRevenueService = async (
@@ -125,38 +118,29 @@ const getRevenueService = async (
   let endDate: Date | undefined;
 
   if (filterType && filterValue) {
-    let baseDate: Date | undefined;
-
     if (filterType === "day") {
-      baseDate = new Date(filterValue);
-      if (!isNaN(baseDate.getTime())) {
-        startDate = getStartOfDay(baseDate);
-        endDate = getEndOfDay(baseDate);
-      }
+      const { start, end } = getUtcRangeForLocalDate(filterValue, APP_TIME_ZONE);
+      startDate = start;
+      endDate = end;
     } else if (filterType === "month") {
-      const [year, month] = filterValue.split("-").map(Number);
-      if (year && month) {
-        baseDate = new Date(year, month - 1);
-        if (!isNaN(baseDate.getTime())) {
-          startDate = getStartOfMonth(baseDate);
-          endDate = getEndOfMonth(baseDate);
-        }
-      }
+      const { start, end } = getUtcRangeForMonth(filterValue, APP_TIME_ZONE);
+      startDate = start;
+      endDate = end;
     } else if (filterType === "quarter") {
-      const [yearStr, quarterStr] = filterValue.split("-Q");
-      const year = Number(yearStr);
-      const quarter = Number(quarterStr);
-      if (year && quarter && quarter >= 1 && quarter <= 4) {
-        baseDate = new Date(year, (quarter - 1) * 3);
-        if (!isNaN(baseDate.getTime())) {
-          startDate = getStartOfQuarter(baseDate);
-          endDate = getEndOfQuarter(baseDate);
-        }
-      }
+      const { start, end } = getUtcRangeForQuarter(filterValue, APP_TIME_ZONE);
+      startDate = start;
+      endDate = end;
     }
   }
 
-  const totalRevenue = await appointmentRevenueRepo.sum("totalServiceRevenue");
+  const totalRevenueResult = await appointmentRevenueRepo
+    .createQueryBuilder("revenue")
+    .select("SUM(revenue.totalServiceRevenue)", "total")
+    .getRawOne();
+
+  const totalRevenue = totalRevenueResult?.total
+    ? Number(totalRevenueResult.total)
+    : 0;
 
   let filteredRevenue = 0;
   if (startDate && endDate) {
@@ -171,10 +155,10 @@ const getRevenueService = async (
 
     filteredRevenue = result?.total ? Number(result.total) : 0;
   } else {
-    filteredRevenue = totalRevenue || 0;
+    filteredRevenue = totalRevenue;
   }
 
-  return { totalRevenue: totalRevenue || 0, filteredRevenue };
+  return { totalRevenue, filteredRevenue };
 };
 
 export default getRevenueService;
