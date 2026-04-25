@@ -1,8 +1,9 @@
 import z from "zod";
-import { returnUserInAppoitments, returnUserSchema } from "./users.schema";
+import { returnUserInAppoitments } from "./users.schema";
 import { returnServiceSchema } from "./barberServices.schema";
 
 import appointmentStatusEnum from "../enum/appointmentStatus.enum";
+import { toUtcDate, APP_TIME_ZONE } from "../utils/timezone";
 
 export const appointmentBaseSchema = z.object({
   startTime: z.date().or(z.string()),
@@ -27,8 +28,8 @@ export const updateAppointmentSchema = appointmentBaseSchema
   .refine(
     (data) => {
       if (data.startTime && data.endTime) {
-        const start = new Date(data.startTime);
-        const end = new Date(data.endTime);
+        const start = toUtcDate(data.startTime, APP_TIME_ZONE);
+        const end = toUtcDate(data.endTime, APP_TIME_ZONE);
         return end > start;
       }
       return true;
