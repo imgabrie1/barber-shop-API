@@ -22,13 +22,13 @@ export class AppointmentRevenue {
   serviceName: string;
 
   @Column({ type: "decimal", precision: 5, scale: 2 })
-  priceAtCompletion: number;
-
-  @Column({ type: "int", default: 1 })
-  quantity: number;
+  totalServiceRevenuePaidByClient: number;
 
   @Column({ type: "decimal", precision: 5, scale: 2 })
-  totalServiceRevenue: number;
+  barberCommissionPercentageApplied: number;
+
+  @Column({ type: "decimal", precision: 5, scale: 2 })
+  barberCommissionAmount: number;
 
   @Column("uuid")
   barberId_original: string;
