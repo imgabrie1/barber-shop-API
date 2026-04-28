@@ -12,6 +12,7 @@ import {
 } from "typeorm";
 import roleEnum from "../enum/role.enum";
 import { Appointment } from "./appointments.entity";
+import { BarberServiceCommission } from "./barberServiceCommission.entity"; 
 
 @Entity("users")
 @Index("IDX_USER_ROLE", ["role"])
@@ -44,6 +45,12 @@ export class User {
 
   @OneToMany(() => Appointment, (appointment) => appointment.barber)
   barberAppointments: Appointment[];
+
+  @OneToMany(
+    () => BarberServiceCommission,
+    (barberServiceCommission) => barberServiceCommission.barber,
+  )
+  barberServiceCommissions: BarberServiceCommission[];
 
   @CreateDateColumn()
   createdAt: Date;
