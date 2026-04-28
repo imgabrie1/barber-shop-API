@@ -31,10 +31,22 @@ export const updateAppointmentStatusController = async (
   req: Request,
   res: Response,
 ): Promise<Response> => {
-  const { id } = req.params;
-  const { status } = req.body;
-  const updated = await updateAppointmentStatusService(id as string, status);
-  return res.status(200).json(updated);
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const updated = await updateAppointmentStatusService(id as string, status);
+    return res.status(200).json(updated);
+  } catch (error) {
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({ error: error.message });
+    }
+
+    if (error instanceof Error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    return res.status(500).json({ error: "Erro interno do servidor" });
+  }
 };
 
 export const userCancelAppointmentController = async (

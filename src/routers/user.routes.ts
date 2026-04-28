@@ -13,6 +13,7 @@ import {
 import ensureUserIsAuthenticatedMiddleware from "../middlewares/ensureUserIsAuthenticated.middleware";
 import ensureIsAdminOrBarberMiddleware from "../middlewares/ensureIsAdminOrBarber.middleware";
 import ensureIsAdminMiddleware from "../middlewares/ensureIsAdmin.middleware";
+import { getBarberCommissionRevenueController } from "../controllers/barberRevenue.controller";
 
 const userRoutes: Router = Router();
 
@@ -46,6 +47,12 @@ userRoutes.get(
   ensureUserIsAuthenticatedMiddleware,
   ensureIsAdminOrBarberMiddleware,
   getUserByIDcontroller,
+);
+
+userRoutes.get(
+  "/me/revenue",
+  ensureUserIsAuthenticatedMiddleware,
+  getBarberCommissionRevenueController,
 );
 
 userRoutes.delete(

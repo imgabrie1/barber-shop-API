@@ -1,3 +1,4 @@
+import { BarberServiceCommission } from "../../entities/barberServiceCommission.entity";
 import { AppDataSource } from "../../data-source";
 import { Appointment } from "../../entities/appointments.entity";
 import { AppointmentRevenue } from "../../entities/appointmentRevenue.entity";
@@ -59,11 +60,33 @@ const updateAppointmentStatusService = async (
 
     if (newStatus === appointmentStatusEnum.COMPLETED && currentStatus !== appointmentStatusEnum.COMPLETED) {
       const appointmentRevenueRepo = transactionalEntityManager.getRepository(AppointmentRevenue);
+      const barberServiceCommissionRepo = transactionalEntityManager.getRepository(BarberServiceCommission);
 
       for (const appointmentService of appointment.appointmentServices) {
-        const price = Number(appointmentService.service.price);
-        const quantity = 1;
-        const totalServiceRevenue = price * quantity;
+        const customCommission = await barberServiceCommissionRepo.findOne({
+            where: {
+                barber: { id: appointment.barber.id },
+                service: { id: appointmentService.service.id }
+            }
+        });
+
+        const totalServiceRevenuePaidByClient = Number(
+          appointmentService.service.price,
+        ); 
+
+        let barberCommissionPercentageApplied = Number(
+          appointmentService.service.defaultBarberCommissionPercentage,
+        );
+
+        if (customCommission) {
+          barberCommissionPercentageApplied = Number(
+            customCommission.commissionPercentage,
+          );
+        }
+
+        const barberCommissionAmount =
+          totalServiceRevenuePaidByClient *
+          (barberCommissionPercentageApplied / 100);
 
         const newAppointmentRevenue = appointmentRevenueRepo.create({
           appointmentId_original: appointment.id,
@@ -71,9 +94,9 @@ const updateAppointmentStatusService = async (
           appointmentEndTime: appointment.endTime,
           serviceId_original: appointmentService.service.id,
           serviceName: appointmentService.service.name,
-          priceAtCompletion: price,
-          quantity: quantity,
-          totalServiceRevenue: totalServiceRevenue,
+          totalServiceRevenuePaidByClient: totalServiceRevenuePaidByClient,
+          barberCommissionPercentageApplied: barberCommissionPercentageApplied,
+          barberCommissionAmount: barberCommissionAmount,
           barberId_original: appointment.barber.id,
           barberName: appointment.barber.name,
           clientId_original: appointment.client.id,

@@ -1,11 +1,7 @@
 import { AppDataSource } from "../../data-source";
 import { AppointmentRevenue } from "../../entities/appointmentRevenue.entity";
 import { getUtcRangeForLocalDate, APP_TIME_ZONE } from "../../utils/timezone";
-
-interface RevenueResult {
-  totalRevenue: number;
-  filteredRevenue: number;
-}
+import { AppError } from "../../errors";
 
 interface ValidationResult {
   isValid: boolean;
@@ -100,17 +96,18 @@ const getUtcRangeForQuarter = (
   return { start, end };
 };
 
-const getRevenueService = async (
+export const getBarberCommissionRevenueService = async (
+  barberId: string,
   filterType?: "day" | "month" | "quarter",
   filterValue?: string,
-): Promise<RevenueResult> => {
+) => {
   const appointmentRevenueRepo =
     AppDataSource.getRepository(AppointmentRevenue);
 
   if (filterType) {
     const validation = validateFilterInput(filterType, filterValue || "");
     if (!validation.isValid) {
-      throw new Error(validation.error);
+      throw new AppError(validation.error || "Erro de validação", 400);
     }
   }
 
@@ -119,7 +116,10 @@ const getRevenueService = async (
 
   if (filterType && filterValue) {
     if (filterType === "day") {
-      const { start, end } = getUtcRangeForLocalDate(filterValue, APP_TIME_ZONE);
+      const { start, end } = getUtcRangeForLocalDate(
+        filterValue,
+        APP_TIME_ZONE,
+      );
       startDate = start;
       endDate = end;
     } else if (filterType === "month") {
@@ -133,38 +133,35 @@ const getRevenueService = async (
     }
   }
 
-  const totalRevenueResult = await appointmentRevenueRepo
-    .createQueryBuilder("revenue")
-    .select(
-      "SUM(revenue.totalServiceRevenuePaidByClient - revenue.barberCommissionAmount)",
-      "total",
-    )
+  const totalCommissionResult = await appointmentRevenueRepo
+    .createQueryBuilder("ar")
+    .select("SUM(ar.barberCommissionAmount)", "total")
+    .where("ar.barberId_original = :barberId", { barberId })
     .getRawOne();
 
-  const totalRevenue = totalRevenueResult?.total
-    ? Number(totalRevenueResult.total)
+  const totalCommission = totalCommissionResult?.total
+    ? Number(totalCommissionResult.total)
     : 0;
 
-  let filteredRevenue = 0;
+  let filteredCommission = 0;
   if (startDate && endDate) {
     const result = await appointmentRevenueRepo
-      .createQueryBuilder("revenue")
-      .select(
-        "SUM(revenue.totalServiceRevenuePaidByClient - revenue.barberCommissionAmount)",
-        "total",
-      )
-      .where("revenue.recordedAt BETWEEN :startDate AND :endDate", {
+      .createQueryBuilder("ar")
+      .select("SUM(ar.barberCommissionAmount)", "filtered")
+      .where("ar.barberId_original = :barberId", { barberId })
+      .andWhere("ar.recordedAt BETWEEN :startDate AND :endDate", {
         startDate,
         endDate,
       })
       .getRawOne();
 
-    filteredRevenue = result?.total ? Number(result.total) : 0;
+    filteredCommission = result?.filtered ? Number(result.filtered) : 0;
   } else {
-    filteredRevenue = totalRevenue;
+    filteredCommission = totalCommission;
   }
 
-  return { totalRevenue, filteredRevenue };
+  return {
+    totalRevenue: totalCommission,
+    filteredRevenue: filteredCommission,
+  };
 };
-
-export default getRevenueService;
