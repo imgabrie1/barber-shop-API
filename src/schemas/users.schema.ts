@@ -1,5 +1,6 @@
 import { string, z } from "zod";
 import roleEnum from "../enum/role.enum";
+import { APP_TIME_ZONE, formatDateTimeInTimeZone } from "../utils/timezone";
 
 export const phoneNumberSchema = z
   .string()
@@ -23,8 +24,14 @@ export const returnUserSchema = userSchema
   .omit({ password: true });
 
 export const returnUserSchemaComplete = returnUserSchema.extend({
-  createdAt: z.date().or(string()),
-  updatedAt: z.date().or(string()),
+  createdAt: z
+    .date()
+    .or(z.string())
+    .transform((val) => formatDateTimeInTimeZone(new Date(val), APP_TIME_ZONE)),
+  updatedAt: z
+    .date()
+    .or(z.string())
+    .transform((val) => formatDateTimeInTimeZone(new Date(val), APP_TIME_ZONE)),
 });
 
 export const returnUserInAppoitments = returnUserSchema.omit({ role: true, isActive: true });
