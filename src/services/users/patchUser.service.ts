@@ -2,7 +2,7 @@ import { AppDataSource } from "../../data-source";
 import { User } from "../../entities/user.entity";
 import { AppError } from "../../errors";
 import { iUserReturn } from "../../interfaces/user.interface";
-import { returnUserSchema } from "../../schemas/users.schema";
+import { returnUserSchemaComplete } from "../../schemas/users.schema";
 
 const patchUserService = async (
   updatedData: Partial<User>,
@@ -23,7 +23,7 @@ const patchUserService = async (
 
   await userRepo.save(updatedUser);
 
-  return returnUserSchema.parse(updatedUser);
+  return returnUserSchemaComplete.parse(updatedUser);
 };
 
 export default patchUserService;
