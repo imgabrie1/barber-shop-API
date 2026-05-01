@@ -54,58 +54,65 @@ const updateAppointmentStatusService = async (
     );
   }
 
-  await AppDataSource.manager.transaction(async (transactionalEntityManager) => {
-    appointment.status = newStatus;
-    await transactionalEntityManager.save(appointment);
+  await AppDataSource.manager.transaction(
+    async (transactionalEntityManager) => {
+      appointment.status = newStatus;
+      await transactionalEntityManager.save(appointment);
 
-    if (newStatus === appointmentStatusEnum.COMPLETED && currentStatus !== appointmentStatusEnum.COMPLETED) {
-      const appointmentRevenueRepo = transactionalEntityManager.getRepository(AppointmentRevenue);
-      const barberServiceCommissionRepo = transactionalEntityManager.getRepository(BarberServiceCommission);
+      if (
+        newStatus === appointmentStatusEnum.COMPLETED &&
+        currentStatus !== appointmentStatusEnum.COMPLETED
+      ) {
+        const appointmentRevenueRepo =
+          transactionalEntityManager.getRepository(AppointmentRevenue);
+        const barberServiceCommissionRepo =
+          transactionalEntityManager.getRepository(BarberServiceCommission);
 
-      for (const appointmentService of appointment.appointmentServices) {
-        const customCommission = await barberServiceCommissionRepo.findOne({
+        for (const appointmentService of appointment.appointmentServices) {
+          const customCommission = await barberServiceCommissionRepo.findOne({
             where: {
-                barber: { id: appointment.barber.id },
-                service: { id: appointmentService.service.id }
-            }
-        });
+              barber: { id: appointment.barber.id },
+              service: { id: appointmentService.service.id },
+            },
+          });
 
-        const totalServiceRevenuePaidByClient = Number(
-          appointmentService.service.price,
-        ); 
-
-        let barberCommissionPercentageApplied = Number(
-          appointmentService.service.defaultBarberCommissionPercentage,
-        );
-
-        if (customCommission) {
-          barberCommissionPercentageApplied = Number(
-            customCommission.commissionPercentage,
+          const totalServiceRevenuePaidByClient = Number(
+            appointmentService.service.price,
           );
+
+          let barberCommissionPercentageApplied = Number(
+            appointmentService.service.defaultBarberCommissionPercentage,
+          );
+
+          if (customCommission) {
+            barberCommissionPercentageApplied = Number(
+              customCommission.commissionPercentage,
+            );
+          }
+
+          const barberCommissionAmount =
+            totalServiceRevenuePaidByClient *
+            (barberCommissionPercentageApplied / 100);
+
+          const newAppointmentRevenue = appointmentRevenueRepo.create({
+            appointmentId_original: appointment.id,
+            appointmentStartTime: appointment.startTime,
+            appointmentEndTime: appointment.endTime,
+            serviceId_original: appointmentService.service.id,
+            serviceName: appointmentService.service.name,
+            totalServiceRevenuePaidByClient: totalServiceRevenuePaidByClient,
+            barberCommissionPercentageApplied:
+              barberCommissionPercentageApplied,
+            barberCommissionAmount: barberCommissionAmount,
+            barberId_original: appointment.barber.id,
+            barberName: appointment.barber.name,
+            clientId_original: appointment.client.id,
+          });
+          await transactionalEntityManager.save(newAppointmentRevenue);
         }
-
-        const barberCommissionAmount =
-          totalServiceRevenuePaidByClient *
-          (barberCommissionPercentageApplied / 100);
-
-        const newAppointmentRevenue = appointmentRevenueRepo.create({
-          appointmentId_original: appointment.id,
-          appointmentStartTime: appointment.startTime,
-          appointmentEndTime: appointment.endTime,
-          serviceId_original: appointmentService.service.id,
-          serviceName: appointmentService.service.name,
-          totalServiceRevenuePaidByClient: totalServiceRevenuePaidByClient,
-          barberCommissionPercentageApplied: barberCommissionPercentageApplied,
-          barberCommissionAmount: barberCommissionAmount,
-          barberId_original: appointment.barber.id,
-          barberName: appointment.barber.name,
-          clientId_original: appointment.client.id,
-        });
-        await transactionalEntityManager.save(newAppointmentRevenue);
       }
-    }
-  });
-
+    },
+  );
 
   const formattedAppointment = {
     ...appointment,
@@ -116,6 +123,5 @@ const updateAppointmentStatusService = async (
 
   return returnAppointmentSchema.parse(formattedAppointment);
 };
-
 
 export default updateAppointmentStatusService;
