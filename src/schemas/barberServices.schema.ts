@@ -15,6 +15,12 @@ export const serviceSchema = z.object({
     .number()
     .positive("Preço deve ser positivo")
     .max(999.99, "Preço máximo é 999.99"),
+
+  defaultBarberCommissionPercentage: z
+    .number()
+    .min(0, "Porcentagem de comissão deve ser no mínimo 0")
+    .max(100, "Porcentagem de comissão deve ser no máximo 100")
+    .default(0),
 });
 
 export const returnServiceSchema = serviceSchema.extend({
