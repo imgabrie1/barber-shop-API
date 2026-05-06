@@ -27,6 +27,7 @@ adminRoutes.post(
   createShopController,
 );
 
+
 adminRoutes.delete(
   "/:id",
   ensureUserIsAuthenticatedMiddleware,
