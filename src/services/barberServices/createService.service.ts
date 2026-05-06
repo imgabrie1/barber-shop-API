@@ -1,6 +1,7 @@
-import { DeepPartial } from "typeorm";
+import { In } from "typeorm";
 import { AppDataSource } from "../../data-source";
 import { Service } from "../../entities/services.entity";
+import { Shop } from "../../entities/shop.entity";
 import { AppError } from "../../errors";
 import {
   iRepoService,
@@ -13,6 +14,7 @@ const createBarberServiceService = async (
   serviceData: iService,
 ): Promise<iServiceReturn> => {
   const serviceRepo: iRepoService = AppDataSource.getRepository(Service);
+  const shopRepo = AppDataSource.getRepository(Shop);
 
   const existingService = await serviceRepo.findOne({
     where: {
@@ -24,13 +26,35 @@ const createBarberServiceService = async (
     throw new AppError("Esse serviço já existe", 409);
   }
 
-  const service: Service = serviceRepo.create(serviceData);
+  const { shopId, ...serviceCleanData } = serviceData;
+
+  let shops: Shop[] = [];
+
+  if (shopId) {
+    const shopIds = Array.isArray(shopId) ? shopId : [shopId];
+    shops = await shopRepo.findBy({ id: In(shopIds) });
+
+    if (shops.length !== shopIds.length) {
+      throw new AppError("Uma ou mais lojas não foram encontradas", 404);
+    }
+  } else {
+    shops = await shopRepo.find();
+    if (shops.length === 0) {
+      throw new AppError(
+        "Nenhuma loja cadastrada para associar o serviço",
+        400,
+      );
+    }
+  }
+
+  const service = serviceRepo.create({
+    ...serviceCleanData,
+    shops: shops,
+  });
 
   await serviceRepo.save(service);
 
-  const newService = returnServiceSchema.parse(service);
-
-  return newService;
+  return returnServiceSchema.parse(service);
 };
 
 export default createBarberServiceService;

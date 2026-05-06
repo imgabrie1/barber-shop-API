@@ -12,16 +12,18 @@ export const phoneNumberSchema = z
 export const userSchema = z.object({
   name: z.string().max(50),
   phoneNumber: phoneNumberSchema,
-  role: z.enum(roleEnum).default(roleEnum.CLIENT),
+  role: z.nativeEnum(roleEnum).default(roleEnum.CLIENT),
   password: z.string().max(120),
   isActive: z.boolean().default(true),
+  shopId: z.string().uuid().optional(),
 });
 
 export const returnUserSchema = userSchema
   .extend({
     id: z.string(),
+    shop: z.object({ id: z.string(), name: z.string() }).optional().nullable(),
   })
-  .omit({ password: true });
+  .omit({ password: true, shopId: true });
 
 export const returnUserSchemaComplete = returnUserSchema.extend({
   createdAt: z
@@ -34,6 +36,9 @@ export const returnUserSchemaComplete = returnUserSchema.extend({
     .transform((val) => formatDateTimeInTimeZone(new Date(val), APP_TIME_ZONE)),
 });
 
-export const returnUserInAppoitments = returnUserSchema.omit({ role: true, isActive: true });
+export const returnUserInAppoitments = returnUserSchema.omit({
+  role: true,
+  isActive: true,
+});
 
 export const returnMultipleUserSchema = returnUserSchemaComplete.array();

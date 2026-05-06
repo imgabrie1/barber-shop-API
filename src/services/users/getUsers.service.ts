@@ -5,7 +5,11 @@ import { returnMultipleUserSchema } from "../../schemas/users.schema";
 
 const getUsersService = async (): Promise<iUserReturn[]> => {
     const userRepo = AppDataSource.getRepository(User);
-    const users = await userRepo.find();
+    const users = await userRepo.find({
+        relations: {
+            shop: true
+        }
+    });
     return returnMultipleUserSchema.parse(users);
 };
 

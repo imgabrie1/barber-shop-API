@@ -1,49 +1,38 @@
 import { Request, Response } from "express";
+import createShopService from "../services/admin/createShop.service";
 import getRevenueService from "../services/admin/getRevenue.service";
+import { AppDataSource } from "../data-source";
+import { User } from "../entities/user.entity";
+import roleEnum from "../enum/role.enum";
 import { AppError } from "../errors";
 import { updateBarberServiceCommissionService } from "../services/barberServices/updateBarberServiceCommission.service";
 
-export const getRevenueController = async (
-  request: Request,
-  response: Response,
-): Promise<Response> => {
-  try {
-    const { filterType, filterValue } = request.query;
+export const createShopController = async (req: Request, res: Response) => {
+  const shop = await createShopService(req.body);
+  return res.status(201).json(shop);
+};
 
-    if (filterType && !filterValue) {
-      throw new AppError(
-        "filterValue é obrigatório quando filterType é fornecido",
-        400,
-      );
-    }
+export const getRevenueController = async (req: Request, res: Response) => {
+  const { filterType, filterValue } = req.query;
+  let shopId = req.query.shopId as string;
 
-    if (
-      filterType &&
-      !["day", "month", "quarter"].includes(filterType as string)
-    ) {
-      throw new AppError(
-        "filterType inválido. Use: day, month ou quarter",
-        400,
-      );
-    }
+  if (req.role === roleEnum.MANAGER) {
+    const userRepo = AppDataSource.getRepository(User);
+    const manager = await userRepo.findOne({
+      where: { id: req.id },
+      relations: ["shop"],
+    });
 
-    const revenue = await getRevenueService(
-      filterType as "day" | "month" | "quarter" | undefined,
-      filterValue as string | undefined,
-    );
-
-    return response.status(200).json(revenue);
-  } catch (error) {
-    if (error instanceof AppError) {
-      return response.status(error.statusCode).json({ error: error.message });
-    }
-
-    if (error instanceof Error) {
-      return response.status(400).json({ error: error.message });
-    }
-
-    return response.status(500).json({ error: "Erro interno do servidor" });
+    shopId = manager?.shop?.id || "";
   }
+
+  const revenue = await getRevenueService({
+    filterType: filterType as any,
+    filterValue: filterValue as string,
+    shopId: shopId,
+  });
+
+  return res.json(revenue);
 };
 
 export const updateBarberServiceCommissionController = async (

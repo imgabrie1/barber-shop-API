@@ -4,6 +4,8 @@ import {
   PrimaryGeneratedColumn,
   Column,
   OneToMany,
+  ManyToOne,
+  JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
   BeforeInsert,
@@ -12,7 +14,8 @@ import {
 } from "typeorm";
 import roleEnum from "../enum/role.enum";
 import { Appointment } from "./appointments.entity";
-import { BarberServiceCommission } from "./barberServiceCommission.entity"; 
+import { BarberServiceCommission } from "./barberServiceCommission.entity";
+import { Shop } from "./shop.entity";
 
 @Entity("users")
 @Index("IDX_USER_ROLE", ["role"])
@@ -39,6 +42,10 @@ export class User {
 
   @Column({ default: true })
   isActive: boolean;
+
+  @ManyToOne(() => Shop, (shop) => shop.users, { nullable: true })
+  @JoinColumn({ name: "shop_id" })
+  shop: Shop;
 
   @OneToMany(() => Appointment, (appointment) => appointment.client)
   clientAppointments: Appointment[];
