@@ -3,13 +3,18 @@ import {
   getRevenueController,
   updateBarberServiceCommissionController,
   createShopController,
+  updateShopController,
+  deleteShopController,
 } from "../controllers/admin.controller";
 import ensureIsAdminMiddleware from "../middlewares/ensureIsAdmin.middleware";
 import ensureIsAdminOrManagerMiddleware from "../middlewares/ensureIsAdminOrManager.middleware";
 import ensureUserIsAuthenticatedMiddleware from "../middlewares/ensureUserIsAuthenticated.middleware";
 import { adminDeleteUserController } from "../controllers/users.controller";
 import ensureDataIsValidMiddleware from "../middlewares/ensureDataIsValid.middleware";
-import { barberServiceCommissionSchema } from "../schemas/barberServices.schema";
+import {
+  barberServiceCommissionSchema,
+  updateShopSchema,
+} from "../schemas/barberServices.schema";
 
 const adminRoutes = Router();
 
@@ -27,6 +32,20 @@ adminRoutes.post(
   createShopController,
 );
 
+adminRoutes.patch(
+  "/shops/:id",
+  ensureUserIsAuthenticatedMiddleware,
+  ensureIsAdminMiddleware,
+  ensureDataIsValidMiddleware(updateShopSchema),
+  updateShopController,
+);
+
+adminRoutes.delete(
+  "/shops/:id",
+  ensureUserIsAuthenticatedMiddleware,
+  ensureIsAdminMiddleware,
+  deleteShopController,
+);
 
 adminRoutes.delete(
   "/:id",

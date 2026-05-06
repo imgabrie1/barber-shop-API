@@ -6,10 +6,24 @@ import { User } from "../entities/user.entity";
 import roleEnum from "../enum/role.enum";
 import { AppError } from "../errors";
 import { updateBarberServiceCommissionService } from "../services/barberServices/updateBarberServiceCommission.service";
+import updateShopService from "../services/admin/updateShop.service";
+import deleteShopService from "../services/admin/deleteShop.service";
 
 export const createShopController = async (req: Request, res: Response) => {
   const shop = await createShopService(req.body);
   return res.status(201).json(shop);
+};
+
+export const updateShopController = async (req: Request, res: Response) => {
+  const shopId = req.params.id as string;
+  const updatedShop = await updateShopService(shopId, req.body);
+  return res.status(200).json(updatedShop);
+};
+
+export const deleteShopController = async (req: Request, res: Response) => {
+  const shopId = req.params.id as string;
+  await deleteShopService(shopId);
+  return res.status(204).send();
 };
 
 export const getRevenueController = async (req: Request, res: Response) => {
