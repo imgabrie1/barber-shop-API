@@ -1,11 +1,16 @@
 import z, { string } from "zod";
 
-export const returnShopSchema = z.object({
-  id: z.string(),
+export const shopSchema = z.object({
   name: z.string(),
   address: z.string(),
   businessStartHour: z.number(),
   businessEndHour: z.number(),
+});
+
+export const updateShopSchema = shopSchema.partial();
+
+export const returnShopSchema = shopSchema.extend({
+  id: z.string(),
 });
 
 export const returnMultipleShopSchema = returnShopSchema.array()
