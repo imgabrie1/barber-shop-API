@@ -4,12 +4,16 @@ import {
   deleteBarberServiceController,
   getBarberServiceByIDController,
   getBarberServicesController,
+  getShopsController,
   patchServiceController,
 } from "../controllers/barberServices.controller";
 import ensureUserIsAuthenticatedMiddleware from "../middlewares/ensureUserIsAuthenticated.middleware";
 import ensureIsAdminMiddleware from "../middlewares/ensureIsAdmin.middleware";
 import ensureDataIsValidMiddleware from "../middlewares/ensureDataIsValid.middleware";
-import { serviceSchema, updateServiceSchema } from "../schemas/barberServices.schema";
+import {
+  serviceSchema,
+  updateServiceSchema,
+} from "../schemas/barberServices.schema";
 
 const serviceRoutes: Router = Router();
 
@@ -32,6 +36,12 @@ serviceRoutes.get(
   "",
   ensureUserIsAuthenticatedMiddleware,
   getBarberServicesController,
+);
+
+serviceRoutes.get(
+  "/shops",
+  ensureUserIsAuthenticatedMiddleware,
+  getShopsController,
 );
 
 serviceRoutes.get(

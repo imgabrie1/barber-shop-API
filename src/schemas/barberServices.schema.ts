@@ -1,4 +1,14 @@
-import z from "zod";
+import z, { string } from "zod";
+
+export const returnShopSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  address: z.string(),
+  businessStartHour: z.number(),
+  businessEndHour: z.number(),
+});
+
+export const returnMultipleShopSchema = returnShopSchema.array()
 
 export const serviceSchema = z.object({
   name: z
@@ -22,7 +32,7 @@ export const serviceSchema = z.object({
     .max(100, "Porcentagem de comissão deve ser no máximo 100")
     .default(0),
 
-  shopId: z.string().uuid().or(z.array(z.string().uuid())).optional(),
+  shopId: z.string().or(z.array(z.string())).optional(),
 });
 
 export const returnServiceSchema = serviceSchema

@@ -5,6 +5,7 @@ import getBarberServicesService from "../services/barberServices/getBarberServic
 import getBarberServiceByIDService from "../services/barberServices/getBarberServiceByID.service";
 import deleteBarberServiceService from "../services/barberServices/deleteBarberService.service";
 import patchServiceService from "../services/barberServices/patchService.service";
+import getShopsService from "../services/admin/getShops.service";
 
 export const createBarberServiceController = async (
   req: Request,
@@ -23,6 +24,15 @@ export const getBarberServicesController = async (
 ): Promise<Response> => {
   const services = await getBarberServicesService();
   return res.status(200).json(services);
+};
+
+
+export const getShopsController = async (
+  req: Request,
+  res: Response,
+): Promise<Response> => {
+  const shops = await getShopsService();
+  return res.status(200).json(shops);
 };
 
 export const getBarberServiceByIDController = async (
