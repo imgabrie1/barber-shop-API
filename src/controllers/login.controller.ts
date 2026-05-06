@@ -16,7 +16,7 @@ const createLoginController = async (
     where: { phoneNumber: loginData.phoneNumber },
   });
 
-  const { token, refreshToken } = await createLoginService(loginData);
+  const { token } = await createLoginService(loginData);
 
   if (user) {
     const { password, ...userWithoutPassword } = user;
@@ -24,7 +24,6 @@ const createLoginController = async (
     return res.json({
       user: userWithoutPassword,
       token: token,
-      refreshToken: refreshToken,
     });
   } else {
     throw new AppError("Usuário não encontrado", 404);

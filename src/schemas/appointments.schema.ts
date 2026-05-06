@@ -10,20 +10,27 @@ export const appointmentBaseSchema = z.object({
   endTime: z.date().or(z.string()),
   clientId: z.string().optional(),
   barberId: z.string().optional(),
+  shopId: z.string().uuid().optional(),
   status: z.nativeEnum(appointmentStatusEnum).optional(),
 });
 
 export const createAppointmentSchema = z.object({
   startTime: z.string().or(z.date()),
-  barberId: z.string(),
-  serviceIds: z.array(z.string()).min(1, "Selecione pelo menos um serviço"),
+  barberId: z.string().uuid(),
+  shopId: z.string().uuid(),
+  serviceIds: z
+    .array(z.string().uuid())
+    .min(1, "Selecione pelo menos um serviço"),
 });
 
 export const updateAppointmentSchema = appointmentBaseSchema
   .partial()
   .extend({
-    id: z.string().optional(),
-    serviceIds: z.array(z.string()).min(1, "Selecione pelo menos um serviço").optional(),
+    id: z.string().uuid().optional(),
+    serviceIds: z
+      .array(z.string().uuid())
+      .min(1, "Selecione pelo menos um serviço")
+      .optional(),
   })
   .refine(
     (data) => {
@@ -44,10 +51,11 @@ export const returnAppointmentSchema = z.object({
   id: z.string(),
   startTime: z.date().or(z.string()),
   endTime: z.date().or(z.string()),
-  status: z.enum(appointmentStatusEnum),
+  status: z.nativeEnum(appointmentStatusEnum),
   client: returnUserInAppoitments.optional(),
   barber: returnUserInAppoitments.optional(),
-  services: z.array(returnServiceSchema)
+  shop: z.object({ id: z.string(), name: z.string() }).optional(),
+  services: z.array(returnServiceSchema),
 });
 
 export const appointmentResponseSchema = returnAppointmentSchema;

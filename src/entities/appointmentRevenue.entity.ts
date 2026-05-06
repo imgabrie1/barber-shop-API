@@ -1,5 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from "typeorm";
-import appointmentStatusEnum from "../enum/appointmentStatus.enum";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from "typeorm";
+import { Shop } from "./shop.entity";
 
 @Entity("appointment_revenues")
 export class AppointmentRevenue {
@@ -39,6 +46,9 @@ export class AppointmentRevenue {
   @Column("uuid")
   clientId_original: string;
 
+  @ManyToOne(() => Shop, (shop) => shop.revenues, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "shop_id" })
+  shop: Shop;
 
   @CreateDateColumn()
   recordedAt: Date;
