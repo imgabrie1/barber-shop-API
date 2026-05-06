@@ -2,6 +2,7 @@ import { AppDataSource } from "../../data-source";
 import { AppError } from "../../errors";
 import { Appointment } from "../../entities/appointments.entity";
 import { User } from "../../entities/user.entity";
+import { Shop } from "../../entities/shop.entity";
 import { Service } from "../../entities/services.entity";
 import { AppointmentService } from "../../entities/appointmentServices.entity";
 import {
@@ -22,100 +23,132 @@ const createAppointmentService = async (
   appointmentData: iAppointment,
   clientId: string,
 ): Promise<iAppointmentReturn> => {
-  const { barberId, serviceIds, startTime } = appointmentData;
+  const { barberId, serviceIds, startTime, shopId } = appointmentData;
 
-  const result = await AppDataSource.transaction(async (transactionalEntityManager) => {
-    const userRepo = transactionalEntityManager.getRepository(User);
-    const serviceRepo = transactionalEntityManager.getRepository(Service);
-    const appointmentRepo = transactionalEntityManager.getRepository(Appointment);
-    const appointmentServiceRepo = transactionalEntityManager.getRepository(AppointmentService);
+  const result = await AppDataSource.transaction(
+    async (transactionalEntityManager) => {
+      const userRepo = transactionalEntityManager.getRepository(User);
+      const serviceRepo = transactionalEntityManager.getRepository(Service);
+      const shopRepo = transactionalEntityManager.getRepository(Shop);
+      const appointmentRepo =
+        transactionalEntityManager.getRepository(Appointment);
+      const appointmentServiceRepo =
+        transactionalEntityManager.getRepository(AppointmentService);
 
-    const client = await userRepo.findOneBy({ id: clientId });
-    if (!client) {
-      throw new AppError("Cliente não encontrado", 404);
-    }
+      const client = await userRepo.findOneBy({ id: clientId });
+      if (!client) {
+        throw new AppError("Cliente não encontrado", 404);
+      }
 
-    const barber = await userRepo.findOneBy({ id: barberId });
-    if (!barber) {
-      throw new AppError("Barbeiro não encontrado", 404);
-    }
-    if (barber.role !== roleEnum.BARBER) {
-      throw new AppError("O usuário informado não é um barbeiro", 400);
-    }
+      const shop = await shopRepo.findOneBy({ id: shopId });
+      if (!shop) {
+        throw new AppError("Loja não encontrada", 404);
+      }
 
-    const services = await serviceRepo.findBy({
-      id: In(serviceIds),
-    });
-
-    if (services.length !== serviceIds.length) {
-      throw new AppError("Um ou mais serviços não foram encontrados", 404);
-    }
-
-    const totalDurationMinutes = services.reduce(
-      (acc, service) => acc + service.durationMinutes,
-      0,
-    );
-
-    const startDate = toUtcDate(startTime, APP_TIME_ZONE);
-    const endDate = new Date(startDate.getTime() + totalDurationMinutes * 60000);
-
-    ensureWithinBusinessHours(startDate, endDate);
-
-    const conflictingBarberAppointment = await appointmentRepo.findOne({
-      where: {
-        barber: { id: barberId },
-        startTime: LessThan(endDate),
-        endTime: MoreThan(startDate),
-      },
-    });
-
-    const conflictingClientAppointment = await appointmentRepo.findOne({
-      where: {
-        client: { id: clientId },
-        startTime: LessThan(endDate),
-        endTime: MoreThan(startDate),
-      },
-    });
-
-    if (conflictingBarberAppointment) {
-      throw new AppError(
-        "O barbeiro já possui um agendamento neste horário",
-        409,
-      );
-    }
-
-    if (conflictingClientAppointment) {
-      throw new AppError(
-        "Você já possui um agendamento neste horário",
-        409,
-      );
-    }
-
-    const newAppointment = appointmentRepo.create({
-      startTime: startDate,
-      endTime: endDate,
-      client: client,
-      barber: barber,
-    });
-
-    await appointmentRepo.save(newAppointment);
-
-    const appointmentServices = services.map((service) => {
-      return appointmentServiceRepo.create({
-        appointment: newAppointment,
-        service: service,
-        appointment_id: newAppointment.id,
-        service_id: service.id,
+      const barber = await userRepo.findOne({
+        where: { id: barberId },
+        relations: ["shop"],
       });
-    });
+      if (!barber) {
+        throw new AppError("Barbeiro não encontrado", 404);
+      }
+      if (barber.role !== roleEnum.BARBER) {
+        throw new AppError("O usuário informado não é um barbeiro", 400);
+      }
 
-    await appointmentServiceRepo.save(appointmentServices);
+      if (barber.shop?.id !== shopId) {
+        throw new AppError("Este barbeiro não trabalha nesta unidade", 400);
+      }
 
-    return {
-      ...newAppointment,
-      services: services,
-    };
-  });
+      const services = await serviceRepo.find({
+        where: { id: In(serviceIds) },
+        relations: ["shops"],
+      });
+
+      if (services.length !== serviceIds.length) {
+        throw new AppError("Um ou mais serviços não foram encontrados", 404);
+      }
+
+      const invalidServices = services.filter(
+        (service) => !service.shops.some((s) => s.id === shopId),
+      );
+
+      if (invalidServices.length > 0) {
+        throw new AppError(
+          `Um ou mais serviços não estão disponíveis nesta unidade: ${invalidServices
+            .map((s) => s.name)
+            .join(", ")}`,
+          400,
+        );
+      }
+
+      const totalDurationMinutes = services.reduce(
+        (acc, service) => acc + service.durationMinutes,
+        0,
+      );
+
+      const startDate = toUtcDate(startTime, APP_TIME_ZONE);
+      const endDate = new Date(
+        startDate.getTime() + totalDurationMinutes * 60000,
+      );
+
+      ensureWithinBusinessHours(startDate, endDate, shop);
+
+      const conflictingBarberAppointment = await appointmentRepo.findOne({
+        where: {
+          barber: { id: barberId },
+          startTime: LessThan(endDate),
+          endTime: MoreThan(startDate),
+        },
+      });
+
+      const conflictingClientAppointment = await appointmentRepo.findOne({
+        where: {
+          client: { id: clientId },
+          startTime: LessThan(endDate),
+          endTime: MoreThan(startDate),
+        },
+      });
+
+      if (conflictingBarberAppointment) {
+        throw new AppError(
+          "O barbeiro já possui um agendamento neste horário",
+          409,
+        );
+      }
+
+      if (conflictingClientAppointment) {
+        throw new AppError("Você já possui um agendamento neste horário", 409);
+      }
+
+      const newAppointment = appointmentRepo.create({
+        startTime: startDate,
+        endTime: endDate,
+        client: client,
+        barber: barber,
+        shop: shop,
+      });
+
+      await appointmentRepo.save(newAppointment);
+
+      const appointmentServices = services.map((service) => {
+        return appointmentServiceRepo.create({
+          appointment: newAppointment,
+          service: service,
+          appointment_id: newAppointment.id,
+          service_id: service.id,
+        });
+      });
+
+      await appointmentServiceRepo.save(appointmentServices);
+
+      return {
+        ...newAppointment,
+        services: services,
+        shop: shop,
+      };
+    },
+  );
 
   return returnAppointmentSchema.parse({
     ...result,

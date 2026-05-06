@@ -10,6 +10,9 @@ const getUserByIDservice = async (userID: string): Promise<iUserReturn> => {
     where: {
       id: userID,
     },
+    relations: {
+      shop: true,
+    },
   });
   if (!user) {
     throw new AppError("Usuário não encontrado", 404);

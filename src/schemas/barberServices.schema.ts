@@ -21,12 +21,18 @@ export const serviceSchema = z.object({
     .min(0, "Porcentagem de comissão deve ser no mínimo 0")
     .max(100, "Porcentagem de comissão deve ser no máximo 100")
     .default(0),
+
+  shopId: z.string().uuid().or(z.array(z.string().uuid())).optional(),
 });
 
-export const returnServiceSchema = serviceSchema.extend({
-  id: z.string("ID inválido"),
-});
-export const returnMultipleServiceSchema = serviceSchema.array()
+export const returnServiceSchema = serviceSchema
+  .extend({
+    id: z.string("ID inválido"),
+    shops: z.array(z.object({ id: z.string(), name: z.string() })).optional(),
+  })
+  .omit({ shopId: true });
+
+export const returnMultipleServiceSchema = returnServiceSchema.array();
 
 export const createServiceSchema = serviceSchema;
 export const updateServiceSchema = serviceSchema.partial();

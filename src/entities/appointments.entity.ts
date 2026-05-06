@@ -10,12 +10,14 @@ import {
 import { User } from "./user.entity";
 import { AppointmentService } from "./appointmentServices.entity";
 import appointmentStatusEnum from "../enum/appointmentStatus.enum";
+import { Shop } from "./shop.entity";
 
 @Entity("appointments")
 @Index("IDX_APPOINTMENT_CLIENT", ["client"])
 @Index("IDX_APPOINTMENT_BARBER", ["barber"])
 @Index("IDX_APPOINTMENT_START_TIME", ["startTime"])
 @Index("IDX_APPOINTMENT_STATUS", ["status"])
+@Index("IDX_APPOINTMENT_SHOP", ["shop"])
 export class Appointment {
   @PrimaryGeneratedColumn("uuid")
   id: string;
@@ -44,6 +46,10 @@ export class Appointment {
   })
   @JoinColumn({ name: "barber_id" })
   barber: User;
+
+  @ManyToOne(() => Shop, (shop) => shop.appointments, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "shop_id" })
+  shop: Shop;
 
   @OneToMany(() => AppointmentService, (as) => as.appointment)
   appointmentServices: AppointmentService[];

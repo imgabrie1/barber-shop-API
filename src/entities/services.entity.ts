@@ -1,5 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  ManyToMany,
+  JoinTable,
+} from "typeorm";
 import { BarberServiceCommission } from "./barberServiceCommission.entity";
+import { Shop } from "./shop.entity";
 
 @Entity("services")
 export class Service {
@@ -34,6 +42,14 @@ export class Service {
     default: 0,
   })
   defaultBarberCommissionPercentage: number;
+
+  @ManyToMany(() => Shop, (shop) => shop.services)
+  @JoinTable({
+    name: "service_shops",
+    joinColumn: { name: "service_id", referencedColumnName: "id" },
+    inverseJoinColumn: { name: "shop_id", referencedColumnName: "id" },
+  })
+  shops: Shop[];
 
   @OneToMany(
     () => BarberServiceCommission,

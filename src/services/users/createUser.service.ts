@@ -1,13 +1,15 @@
 import { DeepPartial } from "typeorm";
 import { AppDataSource } from "../../data-source";
 import { User } from "../../entities/user.entity";
+import { Shop } from "../../entities/shop.entity";
 import { AppError } from "../../errors";
 import { iRepoUser, iUser, iUserReturn } from "../../interfaces/user.interface";
 import { returnUserSchemaComplete } from "../../schemas/users.schema";
-
+import roleEnum from "../../enum/role.enum";
 
 const createUserService = async (userData: iUser): Promise<iUserReturn> => {
-  const repoUser: iRepoUser = AppDataSource.getRepository(User);
+  const repoUser = AppDataSource.getRepository(User);
+  const shopRepo = AppDataSource.getRepository(Shop);
 
   const existingUser = await repoUser.findOne({
     where: {
@@ -19,14 +21,35 @@ const createUserService = async (userData: iUser): Promise<iUserReturn> => {
     throw new AppError("Número de telefone já existe", 409);
   }
 
-  const user: User = repoUser.create(userData as DeepPartial<User>);
+  const { shopId, ...userCleanData } = userData;
+
+  let shop = null;
+  if (userData.role === roleEnum.BARBER || userData.role === roleEnum.MANAGER) {
+    if (!shopId) {
+      throw new AppError(
+        `Para o cargo ${userData.role}, é obrigatório informar uma loja (shopId)`,
+        400,
+      );
+    }
+    shop = await shopRepo.findOneBy({ id: shopId });
+    if (!shop) {
+      throw new AppError("Loja não encontrada", 404);
+    }
+  } else if (shopId) {
+    shop = await shopRepo.findOneBy({ id: shopId });
+    if (!shop) {
+      throw new AppError("Loja não encontrada", 404);
+    }
+  }
+
+  const user = repoUser.create({
+    ...userCleanData,
+    shop: shop,
+  } as DeepPartial<User>);
 
   await repoUser.save(user);
 
-  const newUser = returnUserSchemaComplete.parse(user);
-
-
-  return newUser;
+  return returnUserSchemaComplete.parse(user);
 };
 
 export default createUserService;
