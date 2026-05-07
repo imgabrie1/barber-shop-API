@@ -38,7 +38,7 @@ userRoutes.get(
 );
 
 userRoutes.get(
-  "/barber",
+  "/barber/:shopId",
   ensureUserIsAuthenticatedMiddleware,
   getBarbersController,
 );

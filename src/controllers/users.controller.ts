@@ -59,7 +59,8 @@ export const getBarbersController = async (
   req: Request,
   res: Response,
 ): Promise<Response> => {
-  const barbers = await getBarbersService();
+  const { shopId } = req.params;
+  const barbers = await getBarbersService(shopId as string);
   return res.status(200).json(barbers);
 };
 
