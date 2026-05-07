@@ -33,7 +33,7 @@ serviceRoutes.delete(
 );
 
 serviceRoutes.get(
-  "",
+  "/perUnit/:shopId",
   ensureUserIsAuthenticatedMiddleware,
   getBarberServicesController,
 );
