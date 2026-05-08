@@ -5,6 +5,7 @@ import {
   createShopController,
   updateShopController,
   deleteShopController,
+  cleanupOldRevenueController,
 } from "../controllers/admin.controller";
 import ensureIsAdminMiddleware from "../middlewares/ensureIsAdmin.middleware";
 import ensureIsAdminOrManagerMiddleware from "../middlewares/ensureIsAdminOrManager.middleware";
@@ -23,6 +24,13 @@ adminRoutes.get(
   ensureUserIsAuthenticatedMiddleware,
   ensureIsAdminOrManagerMiddleware,
   getRevenueController,
+);
+
+adminRoutes.delete(
+  "/revenue/cleanup",
+  ensureUserIsAuthenticatedMiddleware,
+  ensureIsAdminMiddleware,
+  cleanupOldRevenueController,
 );
 
 adminRoutes.post(
