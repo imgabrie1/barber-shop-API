@@ -1,8 +1,10 @@
 import { BarberServiceCommission } from "../../entities/barberServiceCommission.entity";
 import { AppDataSource } from "../../data-source";
 import { Appointment } from "../../entities/appointments.entity";
+import { User } from "../../entities/user.entity";
 import { AppointmentRevenue } from "../../entities/appointmentRevenue.entity";
 import appointmentStatusEnum from "../../enum/appointmentStatus.enum";
+import roleEnum from "../../enum/role.enum";
 import { AppError } from "../../errors";
 import { returnAppointmentSchema } from "../../schemas/appointments.schema";
 import { APP_TIME_ZONE, formatDateTimeInTimeZone } from "../../utils/timezone";
@@ -10,12 +12,17 @@ import { APP_TIME_ZONE, formatDateTimeInTimeZone } from "../../utils/timezone";
 const updateAppointmentStatusService = async (
   appointmentID: string,
   newStatus: appointmentStatusEnum,
+  userID: string,
+  role: roleEnum,
 ) => {
   const appointmentRepo = AppDataSource.getRepository(Appointment);
+  const userRepo = AppDataSource.getRepository(User);
+
   const appointment = await appointmentRepo
     .createQueryBuilder("appointment")
     .leftJoinAndSelect("appointment.barber", "barber")
     .leftJoinAndSelect("appointment.client", "client")
+    .leftJoinAndSelect("appointment.shop", "shop")
     .leftJoinAndSelect("appointment.appointmentServices", "as")
     .leftJoinAndSelect("as.service", "service")
     .where("appointment.id = :appointmentID", { appointmentID })
@@ -23,6 +30,23 @@ const updateAppointmentStatusService = async (
 
   if (!appointment) {
     throw new AppError("Agendamento não encontrado", 404);
+  }
+
+  if (role === roleEnum.ADMIN) {
+  } else if (role === roleEnum.MANAGER) {
+    const manager = await userRepo.findOne({
+      where: { id: userID },
+      relations: ["shop"],
+    });
+    if (!manager || !manager.shop || appointment.shop.id !== manager.shop.id) {
+      throw new AppError("Sem permissão para gerenciar agendamentos de outra loja", 403);
+    }
+  } else if (role === roleEnum.BARBER) {
+    if (appointment.barber.id !== userID) {
+      throw new AppError("Sem permissão para alterar o status de agendamentos de outros barbeiros", 403);
+    }
+  } else {
+    throw new AppError("Clientes não podem alterar o status de agendamentos diretamente", 403);
   }
 
   const validTransitions: Record<
@@ -107,6 +131,7 @@ const updateAppointmentStatusService = async (
             barberId_original: appointment.barber.id,
             barberName: appointment.barber.name,
             clientId_original: appointment.client.id,
+            shop: appointment.shop,
           });
           await transactionalEntityManager.save(newAppointmentRevenue);
         }

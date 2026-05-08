@@ -1,9 +1,10 @@
 import { AppDataSource } from "../../../data-source";
 import { Appointment } from "../../../entities/appointments.entity";
+import { User } from "../../../entities/user.entity";
 import { IPaginationParams } from "../../../interfaces/params.interface";
-import { Between } from "typeorm";
+import roleEnum from "../../../enum/role.enum";
+import { AppError } from "../../../errors";
 import { returnAppointmentSchema } from "../../../schemas/appointments.schema";
-import z from "zod";
 import {
   APP_TIME_ZONE,
   formatDateTimeInTimeZone,
@@ -13,6 +14,8 @@ import {
 interface iGetAppointmentsParams extends IPaginationParams {
   date?: string;
   barberId?: string;
+  userID: string;
+  role: roleEnum;
 }
 
 const getAppointmentsService = async ({
@@ -20,6 +23,8 @@ const getAppointmentsService = async ({
   limit = 10,
   date,
   barberId,
+  userID,
+  role,
 }: iGetAppointmentsParams): Promise<{
   data: any[];
   total: number;
@@ -27,13 +32,33 @@ const getAppointmentsService = async ({
   limit: number;
 }> => {
   const appointmentRepo = AppDataSource.getRepository(Appointment);
+  const userRepo = AppDataSource.getRepository(User);
 
   const queryBuilder = appointmentRepo
     .createQueryBuilder("appointment")
     .leftJoinAndSelect("appointment.barber", "barber")
     .leftJoinAndSelect("appointment.client", "client")
+    .leftJoinAndSelect("appointment.shop", "shop")
     .leftJoinAndSelect("appointment.appointmentServices", "as")
     .leftJoinAndSelect("as.service", "service");
+
+  if (role === roleEnum.ADMIN) {
+  } else if (role === roleEnum.MANAGER) {
+    const manager = await userRepo.findOne({
+      where: { id: userID },
+      relations: ["shop"],
+    });
+    if (!manager || !manager.shop) {
+      throw new AppError("Gerente não associado a uma loja", 403);
+    }
+    queryBuilder.andWhere("appointment.shop_id = :shopId", {
+      shopId: manager.shop.id,
+    });
+  } else if (role === roleEnum.BARBER) {
+    queryBuilder.andWhere("barber.id = :userID", { userID });
+  } else {
+    queryBuilder.andWhere("client.id = :userID", { userID });
+  }
 
   if (barberId) {
     queryBuilder.andWhere("barber.id = :barberId", { barberId });

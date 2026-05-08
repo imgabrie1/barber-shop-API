@@ -1,5 +1,6 @@
 import { AppDataSource } from "../../../data-source";
 import { Appointment } from "../../../entities/appointments.entity";
+import { User } from "../../../entities/user.entity";
 import roleEnum from "../../../enum/role.enum";
 import { AppError } from "../../../errors";
 import { IPaginationParams } from "../../../interfaces/params.interface";
@@ -24,11 +25,13 @@ const getMyAppointmentsService = async ({
   limit: number;
 }> => {
   const appointmentRepo = AppDataSource.getRepository(Appointment);
+  const userRepo = AppDataSource.getRepository(User);
 
   const qb = appointmentRepo
     .createQueryBuilder("appointment")
     .leftJoinAndSelect("appointment.barber", "barber")
     .leftJoinAndSelect("appointment.client", "client")
+    .leftJoinAndSelect("appointment.shop", "shop")
     .leftJoinAndSelect("appointment.appointmentServices", "as")
     .leftJoinAndSelect("as.service", "service");
 
@@ -43,6 +46,17 @@ const getMyAppointmentsService = async ({
 
     case roleEnum.BARBER:
       qb.where("barber.id = :userId", { userId });
+      break;
+
+    case roleEnum.MANAGER:
+      const manager = await userRepo.findOne({
+        where: { id: userId },
+        relations: ["shop"],
+      });
+      if (!manager || !manager.shop) {
+        throw new AppError("Gerente não associado a uma loja", 403);
+      }
+      qb.where("appointment.shop_id = :shopId", { shopId: manager.shop.id });
       break;
 
     case roleEnum.ADMIN:

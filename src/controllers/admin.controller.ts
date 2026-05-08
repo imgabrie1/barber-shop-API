@@ -8,6 +8,7 @@ import { AppError } from "../errors";
 import { updateBarberServiceCommissionService } from "../services/barberServices/updateBarberServiceCommission.service";
 import updateShopService from "../services/admin/updateShop.service";
 import deleteShopService from "../services/admin/deleteShop.service";
+import cleanupOldRevenueService from "../services/admin/cleanupOldRevenue.service";
 
 export const createShopController = async (req: Request, res: Response) => {
   const shop = await createShopService(req.body);
@@ -47,6 +48,11 @@ export const getRevenueController = async (req: Request, res: Response) => {
   });
 
   return res.json(revenue);
+};
+
+export const cleanupOldRevenueController = async (req: Request, res: Response) => {
+  const result = await cleanupOldRevenueService();
+  return res.status(200).json(result);
 };
 
 export const updateBarberServiceCommissionController = async (
