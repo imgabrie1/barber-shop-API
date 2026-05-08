@@ -164,21 +164,22 @@ const getRevenueService = async (queryParams: {
 
   const totalByShopQuery = appointmentRevenueRepo
     .createQueryBuilder("revenue")
-    .select("revenue.shop_id", "shopId")
+    .leftJoin("revenue.shop", "shop")
+    .select("shop.id", "shopId")
     .addSelect(
-      "SUM(revenue.totalServiceRevenuePaidByClient - revenue.barberCommissionAmount)",
+      "SUM(CAST(revenue.totalServiceRevenuePaidByClient AS DECIMAL) - CAST(revenue.barberCommissionAmount AS DECIMAL))",
       "total",
     )
-    .groupBy("revenue.shop_id");
+    .groupBy("shop.id");
 
   if (shopId) {
-    totalByShopQuery.where("revenue.shop_id = :shopId", { shopId });
+    totalByShopQuery.where("shop.id = :shopId", { shopId });
   }
 
   const totalByShopResults = await totalByShopQuery.getRawMany();
 
   totalByShopResults.forEach((res) => {
-    if (shopMap.has(res.shopId)) {
+    if (res.shopId && shopMap.has(res.shopId)) {
       shopMap.get(res.shopId)!.totalRevenue = Number(res.total);
     }
   });
@@ -186,25 +187,26 @@ const getRevenueService = async (queryParams: {
   if (startDate && endDate) {
     const filteredQuery = appointmentRevenueRepo
       .createQueryBuilder("revenue")
-      .select("revenue.shop_id", "shopId")
+      .leftJoin("revenue.shop", "shop")
+      .select("shop.id", "shopId")
       .addSelect(
-        "SUM(revenue.totalServiceRevenuePaidByClient - revenue.barberCommissionAmount)",
+        "SUM(CAST(revenue.totalServiceRevenuePaidByClient AS DECIMAL) - CAST(revenue.barberCommissionAmount AS DECIMAL))",
         "total",
       )
       .where("revenue.recordedAt BETWEEN :startDate AND :endDate", {
         startDate,
         endDate,
       })
-      .groupBy("revenue.shop_id");
+      .groupBy("shop.id");
 
     if (shopId) {
-      filteredQuery.andWhere("revenue.shop_id = :shopId", { shopId });
+      filteredQuery.andWhere("shop.id = :shopId", { shopId });
     }
 
     const filteredByShopResults = await filteredQuery.getRawMany();
 
     filteredByShopResults.forEach((res) => {
-      if (shopMap.has(res.shopId)) {
+      if (res.shopId && shopMap.has(res.shopId)) {
         shopMap.get(res.shopId)!.filteredRevenue = Number(res.total);
       }
     });

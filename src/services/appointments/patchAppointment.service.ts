@@ -1,8 +1,10 @@
-import { In, LessThan, MoreThan } from "typeorm";
+import { In } from "typeorm";
 import { AppDataSource } from "../../data-source";
 import { Appointment } from "../../entities/appointments.entity";
 import { AppointmentService } from "../../entities/appointmentServices.entity";
 import { Service } from "../../entities/services.entity";
+import { User } from "../../entities/user.entity";
+import roleEnum from "../../enum/role.enum";
 import { AppError } from "../../errors";
 import { iAppointmentReturn } from "../../interfaces/appointments.interface";
 import { returnAppointmentSchema } from "../../schemas/appointments.schema";
@@ -17,6 +19,7 @@ const patchAppointmentService = async (
   updatedData: any,
   appointmentID: string,
   userID: string,
+  role: roleEnum,
 ): Promise<iAppointmentReturn> => {
   const result = await AppDataSource.transaction(
     async (transactionalEntityManager) => {
@@ -25,21 +28,40 @@ const patchAppointmentService = async (
       const serviceRepo = transactionalEntityManager.getRepository(Service);
       const appointmentServiceRepo =
         transactionalEntityManager.getRepository(AppointmentService);
+      const userRepo = transactionalEntityManager.getRepository(User);
 
       const oldAppointment = await appointmentRepo.findOne({
         where: { id: appointmentID },
-        relations: ["barber", "client"],
+        relations: ["barber", "client", "shop"],
       });
 
       if (!oldAppointment) {
         throw new AppError("Agendamento não encontrado", 404);
       }
 
-      if (
-        oldAppointment.client.id !== userID &&
-        oldAppointment.barber.id !== userID
-      ) {
-        throw new AppError("Tu nem podia tá aqui...", 403);
+      let hasPermission = false;
+      if (role === roleEnum.ADMIN) {
+        hasPermission = true;
+      } else if (role === roleEnum.MANAGER) {
+        const manager = await userRepo.findOne({
+          where: { id: userID },
+          relations: ["shop"],
+        });
+        if (manager && manager.shop && oldAppointment.shop && manager.shop.id === oldAppointment.shop.id) {
+          hasPermission = true;
+        }
+      } else if (role === roleEnum.BARBER) {
+        if (oldAppointment.barber.id === userID) {
+          hasPermission = true;
+        }
+      } else if (role === roleEnum.CLIENT) {
+        if (oldAppointment.client.id === userID) {
+          hasPermission = true;
+        }
+      }
+
+      if (!hasPermission) {
+        throw new AppError("Sem permissão para editar este agendamento", 403);
       }
 
       let services: Service[] = [];

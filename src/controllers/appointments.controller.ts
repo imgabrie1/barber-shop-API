@@ -34,7 +34,15 @@ export const updateAppointmentStatusController = async (
   try {
     const { id } = req.params;
     const { status } = req.body;
-    const updated = await updateAppointmentStatusService(id as string, status);
+    const userID = req.id;
+    const role = req.role as roleEnum;
+
+    const updated = await updateAppointmentStatusService(
+      id as string,
+      status,
+      userID as string,
+      role,
+    );
     return res.status(200).json(updated);
   } catch (error) {
     if (error instanceof AppError) {
@@ -70,11 +78,16 @@ export const getAppointmentsController = async (
   const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 10));
   const { date, barberId } = req.query;
 
+  const userID = req.id;
+  const role = req.role as roleEnum;
+
   const appointments = await getAppointmentsService({
     page,
     limit,
     date: date as string,
     barberId: barberId as string,
+    userID: userID as string,
+    role,
   });
   return res.status(200).json(appointments);
 };
@@ -84,11 +97,18 @@ export const getAppointmentByIDcontroller = async (
   res: Response,
 ): Promise<Response> => {
   const { id } = req.params;
+  const userID = req.id;
+  const role = req.role as roleEnum;
+
   if (!id) {
-    throw new AppError("loco", 404);
+    throw new AppError("ID do agendamento é obrigatório", 400);
   }
-  const user = await getAppointmentByIDservice(id as string);
-  return res.status(200).json(user);
+  const appointment = await getAppointmentByIDservice(
+    id as string,
+    userID as string,
+    role,
+  );
+  return res.status(200).json(appointment);
 };
 
 export const getMyAppointmentsController = async (
@@ -102,7 +122,7 @@ export const getMyAppointmentsController = async (
   const role = req.role as roleEnum;
 
   const appointments = await getMyAppointmentsService({
-    userId,
+    userId: userId as string,
     role,
     page,
     limit,
@@ -116,8 +136,9 @@ export const deleteAppointmentController = async (
 ): Promise<Response> => {
   const appointmentID = req.params.id as string;
   const userID = req.id;
+  const role = req.role as roleEnum;
 
-  await deleteAppointmentService(userID, appointmentID);
+  await deleteAppointmentService(userID as string, appointmentID, role);
 
   return res.status(204).send();
 };
@@ -180,12 +201,17 @@ export const patchAppointmentController = async (
   res: Response,
 ): Promise<Response> => {
   const appointmentID = req.params.id as string;
-
-  const { id } = req
+  const userID = req.id;
+  const role = req.role as roleEnum;
 
   let updatedData = { ...req.body };
 
-  const appointment = await patchAppointmentService(updatedData, appointmentID, id as string);
+  const appointment = await patchAppointmentService(
+    updatedData,
+    appointmentID,
+    userID as string,
+    role,
+  );
 
   return res.status(200).json(appointment);
 };
