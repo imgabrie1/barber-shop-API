@@ -51,15 +51,3 @@ export const returnMultipleServiceSchema = returnServiceSchema.array();
 
 export const createServiceSchema = serviceSchema;
 export const updateServiceSchema = serviceSchema.partial();
-
-export const barberServiceCommissionSchema = z.object({
-  barberId: z.string().uuid("ID do barbeiro inválido"),
-  serviceId: z.string().uuid("ID do serviço inválido"),
-  commissionPercentage: z
-    .number()
-    .min(0, "Porcentagem de comissão deve ser no mínimo 0")
-    .max(100, "Porcentagem de comissão deve ser no máximo 100")
-    .refine((val) => parseFloat(val.toFixed(2)) === val, {
-      message: "Porcentagem de comissão deve ter no máximo 2 casas decimais",
-    }),
-});
