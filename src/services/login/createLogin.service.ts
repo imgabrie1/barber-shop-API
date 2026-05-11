@@ -29,7 +29,7 @@ const createLoginService = async (
     },
     process.env.SECRET_KEY!,
     {
-      expiresIn: "15m",
+      expiresIn: "24h", // mudar 15m depois em prod
       subject: String(user.id),
     },
   );

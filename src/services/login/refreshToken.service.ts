@@ -22,9 +22,6 @@ const refreshTokenService = async (
     throw new AppError("Usuário não encontrado", 401);
   }
 
-  if (user.refreshToken !== refreshTokenRequest) {
-    throw new AppError("Refresh token inválido", 401);
-  }
 
   const newToken = jwt.sign({ role: user.role }, process.env.SECRET_KEY!, {
     expiresIn: "24h", // mudar 15m depois em prod
