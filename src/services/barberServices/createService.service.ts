@@ -16,16 +16,6 @@ const createBarberServiceService = async (
   const serviceRepo: iRepoService = AppDataSource.getRepository(Service);
   const shopRepo = AppDataSource.getRepository(Shop);
 
-  const existingService = await serviceRepo.findOne({
-    where: {
-      name: serviceData.name,
-    },
-  });
-
-  if (existingService) {
-    throw new AppError("Esse serviço já existe", 409);
-  }
-
   const { shopId, ...serviceCleanData } = serviceData;
 
   let shops: Shop[] = [];
@@ -45,6 +35,21 @@ const createBarberServiceService = async (
         400,
       );
     }
+  }
+
+  const shopIdsToLink = shops.map((shop) => shop.id);
+
+  const existingService = await serviceRepo.findOne({
+    where: {
+      name: serviceData.name,
+      shops: {
+        id: In(shopIdsToLink),
+      },
+    },
+  });
+
+  if (existingService) {
+    throw new AppError("Esse serviço já existe em uma das lojas selecionadas", 409);
   }
 
   const service = serviceRepo.create({
