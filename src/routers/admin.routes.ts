@@ -1,7 +1,6 @@
 import { Router } from "express";
 import {
   getRevenueController,
-  updateBarberServiceCommissionController,
   createShopController,
   updateShopController,
   deleteShopController,
@@ -13,7 +12,6 @@ import ensureUserIsAuthenticatedMiddleware from "../middlewares/ensureUserIsAuth
 import { adminDeleteUserController } from "../controllers/users.controller";
 import ensureDataIsValidMiddleware from "../middlewares/ensureDataIsValid.middleware";
 import {
-  barberServiceCommissionSchema,
   updateShopSchema,
 } from "../schemas/barberServices.schema";
 
@@ -60,14 +58,6 @@ adminRoutes.delete(
   ensureUserIsAuthenticatedMiddleware,
   ensureIsAdminMiddleware,
   adminDeleteUserController,
-);
-
-adminRoutes.patch(
-  "/commissions",
-  ensureUserIsAuthenticatedMiddleware,
-  ensureIsAdminMiddleware,
-  ensureDataIsValidMiddleware(barberServiceCommissionSchema),
-  updateBarberServiceCommissionController,
 );
 
 export default adminRoutes;

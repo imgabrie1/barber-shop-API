@@ -2,11 +2,9 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  OneToMany,
   ManyToMany,
   JoinTable,
 } from "typeorm";
-import { BarberServiceCommission } from "./barberServiceCommission.entity";
 import { Shop } from "./shop.entity";
 
 @Entity("services")
@@ -50,10 +48,4 @@ export class Service {
     inverseJoinColumn: { name: "shop_id", referencedColumnName: "id" },
   })
   shops: Shop[];
-
-  @OneToMany(
-    () => BarberServiceCommission,
-    (barberServiceCommission) => barberServiceCommission.service,
-  )
-  barberServiceCommissions: BarberServiceCommission[];
 }

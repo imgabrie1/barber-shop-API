@@ -1,4 +1,3 @@
-import { BarberServiceCommission } from "../../entities/barberServiceCommission.entity";
 import { AppDataSource } from "../../data-source";
 import { Appointment } from "../../entities/appointments.entity";
 import { User } from "../../entities/user.entity";
@@ -89,28 +88,19 @@ const updateAppointmentStatusService = async (
       ) {
         const appointmentRevenueRepo =
           transactionalEntityManager.getRepository(AppointmentRevenue);
-        const barberServiceCommissionRepo =
-          transactionalEntityManager.getRepository(BarberServiceCommission);
 
         for (const appointmentService of appointment.appointmentServices) {
-          const customCommission = await barberServiceCommissionRepo.findOne({
-            where: {
-              barber: { id: appointment.barber.id },
-              service: { id: appointmentService.service.id },
-            },
-          });
-
           const totalServiceRevenuePaidByClient = Number(
             appointmentService.service.price,
           );
 
           let barberCommissionPercentageApplied = Number(
-            appointmentService.service.defaultBarberCommissionPercentage,
+            appointment.barber.commissionPercentage,
           );
 
-          if (customCommission) {
+          if (barberCommissionPercentageApplied <= 0) {
             barberCommissionPercentageApplied = Number(
-              customCommission.commissionPercentage,
+              appointmentService.service.defaultBarberCommissionPercentage,
             );
           }
 
