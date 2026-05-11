@@ -16,6 +16,7 @@ export const userSchema = z.object({
   password: z.string().max(120),
   isActive: z.boolean().default(true),
   shopId: z.string().uuid().optional(),
+  commissionPercentage: z.number().min(0).max(100).default(0),
 });
 
 export const returnUserSchema = userSchema

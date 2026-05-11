@@ -14,7 +14,6 @@ import {
 } from "typeorm";
 import roleEnum from "../enum/role.enum";
 import { Appointment } from "./appointments.entity";
-import { BarberServiceCommission } from "./barberServiceCommission.entity";
 import { Shop } from "./shop.entity";
 
 @Entity("users")
@@ -53,11 +52,17 @@ export class User {
   @OneToMany(() => Appointment, (appointment) => appointment.barber)
   barberAppointments: Appointment[];
 
-  @OneToMany(
-    () => BarberServiceCommission,
-    (barberServiceCommission) => barberServiceCommission.barber,
-  )
-  barberServiceCommissions: BarberServiceCommission[];
+  @Column({
+    type: "decimal",
+    precision: 5,
+    scale: 2,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string) => Number(value),
+    },
+    default: 0,
+  })
+  commissionPercentage: number;
 
   @CreateDateColumn()
   createdAt: Date;

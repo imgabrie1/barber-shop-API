@@ -5,7 +5,6 @@ import { AppDataSource } from "../data-source";
 import { User } from "../entities/user.entity";
 import roleEnum from "../enum/role.enum";
 import { AppError } from "../errors";
-import { updateBarberServiceCommissionService } from "../services/barberServices/updateBarberServiceCommission.service";
 import updateShopService from "../services/admin/updateShop.service";
 import deleteShopService from "../services/admin/deleteShop.service";
 import cleanupOldRevenueService from "../services/admin/cleanupOldRevenue.service";
@@ -53,31 +52,4 @@ export const getRevenueController = async (req: Request, res: Response) => {
 export const cleanupOldRevenueController = async (req: Request, res: Response) => {
   const result = await cleanupOldRevenueService();
   return res.status(200).json(result);
-};
-
-export const updateBarberServiceCommissionController = async (
-  request: Request,
-  response: Response,
-): Promise<Response> => {
-  try {
-    const { barberId, serviceId, commissionPercentage } = request.body;
-
-    const updatedCommission = await updateBarberServiceCommissionService(
-      barberId,
-      serviceId,
-      commissionPercentage,
-    );
-
-    return response.status(200).json(updatedCommission);
-  } catch (error) {
-    if (error instanceof AppError) {
-      return response.status(error.statusCode).json({ error: error.message });
-    }
-
-    if (error instanceof Error) {
-      return response.status(400).json({ error: error.message });
-    }
-
-    return response.status(500).json({ error: "Erro interno do servidor" });
-  }
 };
