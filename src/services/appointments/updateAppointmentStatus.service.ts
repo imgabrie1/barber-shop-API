@@ -44,8 +44,6 @@ const updateAppointmentStatusService = async (
     if (appointment.barber.id !== userID) {
       throw new AppError("Sem permissão para alterar o status de agendamentos de outros barbeiros", 403);
     }
-  } else {
-    throw new AppError("Clientes não podem alterar o status de agendamentos diretamente", 403);
   }
 
   const validTransitions: Record<
