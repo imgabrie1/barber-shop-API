@@ -4,16 +4,13 @@ import {
   createShopController,
   updateShopController,
   deleteShopController,
-  cleanupOldRevenueController,
 } from "../controllers/admin.controller";
 import ensureIsAdminMiddleware from "../middlewares/ensureIsAdmin.middleware";
 import ensureIsAdminOrManagerMiddleware from "../middlewares/ensureIsAdminOrManager.middleware";
 import ensureUserIsAuthenticatedMiddleware from "../middlewares/ensureUserIsAuthenticated.middleware";
 import { adminDeleteUserController } from "../controllers/users.controller";
 import ensureDataIsValidMiddleware from "../middlewares/ensureDataIsValid.middleware";
-import {
-  updateShopSchema,
-} from "../schemas/barberServices.schema";
+import { updateShopSchema } from "../schemas/barberServices.schema";
 
 const adminRoutes = Router();
 
@@ -22,13 +19,6 @@ adminRoutes.get(
   ensureUserIsAuthenticatedMiddleware,
   ensureIsAdminOrManagerMiddleware,
   getRevenueController,
-);
-
-adminRoutes.delete(
-  "/revenue/cleanup",
-  ensureUserIsAuthenticatedMiddleware,
-  ensureIsAdminMiddleware,
-  cleanupOldRevenueController,
 );
 
 adminRoutes.post(
