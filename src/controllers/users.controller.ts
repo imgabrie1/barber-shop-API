@@ -51,7 +51,11 @@ export const getUsersController = async (
   req: Request,
   res: Response,
 ): Promise<Response> => {
-  const users = await getUsersService();
+  const { page, limit } = req.query;
+  const users = await getUsersService({
+    page: page ? Number(page) : undefined,
+    limit: limit ? Number(limit) : undefined,
+  });
   return res.status(200).json(users);
 };
 
