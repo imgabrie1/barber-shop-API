@@ -12,8 +12,8 @@ import {
 } from "../../../utils/timezone";
 
 interface iGetAppointmentsParams extends IPaginationParams {
-  date?: string;
-  barberId?: string;
+  date?: string | undefined;
+  barberId?: string | undefined;
   userID: string;
   role: roleEnum;
 }

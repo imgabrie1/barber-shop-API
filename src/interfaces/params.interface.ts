@@ -1,4 +1,4 @@
 export interface IPaginationParams {
-  page?: number;
-  limit?: number;
+  page?: number | undefined;
+  limit?: number | undefined;
 }

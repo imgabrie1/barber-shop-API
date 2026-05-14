@@ -23,10 +23,14 @@ export const getBarberServicesController = async (
   res: Response,
 ): Promise<Response> => {
   const { shopId } = req.params;
-  const services = await getBarberServicesService(shopId as string);
+  const { page, limit } = req.query;
+  const services = await getBarberServicesService({
+    shopId: shopId as string,
+    page: page ? Number(page) : undefined,
+    limit: limit ? Number(limit) : undefined,
+  });
   return res.status(200).json(services);
 };
-
 
 export const getShopsController = async (
   req: Request,
