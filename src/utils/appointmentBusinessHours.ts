@@ -22,7 +22,11 @@ const isAllowedDay = (day: number) => day >= 1 && day <= 6;
 export const ensureWithinBusinessHours = (
   start: Date,
   end: Date,
-  shopLimits?: { businessStartHour: number; businessEndHour: number },
+  shopLimits?: {
+    alwaysOpen?: boolean;
+    businessStartHour: number;
+    businessEndHour: number;
+  },
 ): void => {
   const startDay = getZonedDay(start, APP_TIME_ZONE);
   const endDay = getZonedDay(end, APP_TIME_ZONE);
@@ -34,6 +38,8 @@ export const ensureWithinBusinessHours = (
   if (!isSameZonedDate(start, end, APP_TIME_ZONE)) {
     throw new AppError("Agendamento deve iniciar e terminar no mesmo dia", 400);
   }
+
+  if (shopLimits?.alwaysOpen) return;
 
   const startMinutes = getZonedMinutes(start, APP_TIME_ZONE);
   const endMinutes = getZonedMinutes(end, APP_TIME_ZONE);
