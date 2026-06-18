@@ -1,11 +1,11 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class InitialEntities1778540758397 implements MigrationInterface {
-    name = 'InitialEntities1778540758397'
+export class InitialEntities1781807048144 implements MigrationInterface {
+    name = 'InitialEntities1781807048144'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TABLE "appointment_revenues" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "appointmentId_original" uuid NOT NULL, "appointmentStartTime" TIMESTAMP NOT NULL, "appointmentEndTime" TIMESTAMP NOT NULL, "serviceId_original" uuid NOT NULL, "serviceName" character varying NOT NULL, "totalServiceRevenuePaidByClient" numeric(5,2) NOT NULL, "barberCommissionPercentageApplied" numeric(5,2) NOT NULL, "barberCommissionAmount" numeric(5,2) NOT NULL, "barberId_original" uuid NOT NULL, "barberName" character varying(50) NOT NULL, "clientId_original" uuid NOT NULL, "recordedAt" TIMESTAMP NOT NULL DEFAULT now(), "shop_id" uuid, CONSTRAINT "PK_0fc80c46b6f9fba8d84225d4a93" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE TABLE "shops" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying(100) NOT NULL, "address" character varying(255), "isActive" boolean NOT NULL DEFAULT true, "businessStartHour" integer NOT NULL DEFAULT '8', "businessEndHour" integer NOT NULL DEFAULT '18', CONSTRAINT "PK_3c6aaa6607d287de99815e60b96" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TABLE "shops" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying(100) NOT NULL, "address" character varying(255), "isActive" boolean NOT NULL DEFAULT true, "alwaysOpen" boolean NOT NULL DEFAULT false, "businessStartHour" integer NOT NULL DEFAULT '8', "businessEndHour" integer NOT NULL DEFAULT '18', CONSTRAINT "PK_3c6aaa6607d287de99815e60b96" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TABLE "services" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, "durationMinutes" integer NOT NULL, "price" numeric(5,2) NOT NULL, "defaultBarberCommissionPercentage" numeric(5,2) NOT NULL DEFAULT '0', CONSTRAINT "PK_ba2d347a3168a296416c6c5ccb2" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TABLE "appointment_services" ("appointment_id" uuid NOT NULL, "service_id" uuid NOT NULL, CONSTRAINT "PK_0d8cb48b88882567f9bd788b1a0" PRIMARY KEY ("appointment_id", "service_id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_APPOINTMENT_SERVICE_SERVICE" ON "appointment_services" ("service_id") `);
