@@ -147,7 +147,7 @@ export const checkAvailabilityController = async (
   req: Request,
   res: Response,
 ): Promise<Response> => {
-  const { barberId, date, serviceIds, durationMinutes, slotMinutes } = req.query;
+  const { barberId, shopId, date, serviceIds, durationMinutes, slotMinutes } = req.query;
 
   let normalizedServiceIds: string[] | undefined;
   if (Array.isArray(serviceIds)) {
@@ -170,12 +170,14 @@ export const checkAvailabilityController = async (
 
   const availabilityRequest: {
     barberId?: string;
+    shopId?: string;
     date?: string;
     serviceIds?: string[];
     durationMinutes?: number;
     slotMinutes?: number;
   } = {
     barberId: barberId as string,
+    shopId: shopId as string,
     date: date as string,
   };
 
