@@ -2,13 +2,9 @@ import { Between, In } from "typeorm";
 import { AppDataSource } from "../../../data-source";
 import { Appointment } from "../../../entities/appointments.entity";
 import { Service } from "../../../entities/services.entity";
+import { Shop } from "../../../entities/shop.entity";
 import appointmentStatusEnum from "../../../enum/appointmentStatus.enum";
 import { AppError } from "../../../errors";
-import {
-  BUSINESS_END_MINUTES,
-  BUSINESS_START_MINUTES,
-  ensureWithinBusinessHours,
-} from "../../../utils/appointmentBusinessHours";
 import {
   APP_TIME_ZONE,
   formatTimeInTimeZone,
@@ -18,11 +14,11 @@ import {
 
 interface iCheckAvailabilityRequest {
   barberId?: string;
+  shopId?: string;
   date?: string;
   serviceIds?: string[];
   durationMinutes?: number;
   slotMinutes?: number;
-  shopLimits?: { businessStartHour: number; businessEndHour: number };
 }
 
 const isValidDateOnly = (value: string): boolean =>
@@ -30,25 +26,26 @@ const isValidDateOnly = (value: string): boolean =>
 
 const checkAvailabilityService = async ({
   barberId,
+  shopId,
   date,
   serviceIds,
   durationMinutes,
   slotMinutes = 15,
-  shopLimits,
 }: iCheckAvailabilityRequest): Promise<string[]> => {
   const appointmentRepo = AppDataSource.getRepository(Appointment);
   const serviceRepo = AppDataSource.getRepository(Service);
+  const shopRepo = AppDataSource.getRepository(Shop);
 
   if (!date) throw new AppError("Data é obrigatória", 400);
   if (!isValidDateOnly(date))
     throw new AppError("Formato de data inválido. Use YYYY-MM-DD", 400);
+  if (!shopId) throw new AppError("shopId é obrigatório", 400);
 
-  const currentStartMinutes = shopLimits
-    ? shopLimits.businessStartHour * 60
-    : BUSINESS_START_MINUTES;
-  const currentEndMinutes = shopLimits
-    ? shopLimits.businessEndHour * 60
-    : BUSINESS_END_MINUTES;
+  const shop = await shopRepo.findOneBy({ id: shopId });
+  if (!shop) throw new AppError("Loja não encontrada", 404);
+
+  const currentStartMinutes = shop.alwaysOpen ? 0 : shop.businessStartHour * 60;
+  const currentEndMinutes = shop.alwaysOpen ? 24 * 60 : shop.businessEndHour * 60;
 
   let totalDurationMinutes = durationMinutes ?? 30;
   if (serviceIds && serviceIds.length > 0) {

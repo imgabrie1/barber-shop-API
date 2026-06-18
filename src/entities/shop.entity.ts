@@ -24,6 +24,9 @@ export class Shop {
   @Column({ default: true })
   isActive: boolean;
 
+  @Column({ default: false })
+  alwaysOpen: boolean;
+
   @Column({ type: "int", default: 8 })
   businessStartHour: number;
 
