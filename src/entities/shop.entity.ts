@@ -9,6 +9,7 @@ import { User } from "./user.entity";
 import { Appointment } from "./appointments.entity";
 import { Service } from "./services.entity";
 import { AppointmentRevenue } from "./appointmentRevenue.entity";
+import { ShopSchedule } from "./shopSchedule.entity";
 
 @Entity("shops")
 export class Shop {
@@ -27,11 +28,8 @@ export class Shop {
   @Column({ default: false })
   alwaysOpen: boolean;
 
-  @Column({ type: "int", default: 8 })
-  businessStartHour: number;
-
-  @Column({ type: "int", default: 18 })
-  businessEndHour: number;
+  @OneToMany(() => ShopSchedule, (schedule) => schedule.shop, { cascade: true })
+  schedules: ShopSchedule[];
 
   @OneToMany(() => User, (user) => user.shop)
   users: User[];

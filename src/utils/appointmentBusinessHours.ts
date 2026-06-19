@@ -17,23 +17,18 @@ const env = envSchema.parse(process.env);
 export const BUSINESS_START_MINUTES = env.BUSINESS_START_MINUTES_ENV * 60;
 export const BUSINESS_END_MINUTES = env.BUSINESS_END_MINUTES_ENV * 60;
 
-const isAllowedDay = (day: number) => day >= 1 && day <= 6;
+import { ShopSchedule } from "../entities/shopSchedule.entity";
 
 export const ensureWithinBusinessHours = (
   start: Date,
   end: Date,
   shopLimits?: {
     alwaysOpen?: boolean;
-    businessStartHour: number;
-    businessEndHour: number;
+    schedules?: ShopSchedule[];
   },
 ): void => {
   const startDay = getZonedDay(start, APP_TIME_ZONE);
   const endDay = getZonedDay(end, APP_TIME_ZONE);
-
-  if (!isAllowedDay(startDay) || !isAllowedDay(endDay)) {
-    throw new AppError("Agendamentos apenas de segunda a sábado", 400);
-  }
 
   if (!isSameZonedDate(start, end, APP_TIME_ZONE)) {
     throw new AppError("Agendamento deve iniciar e terminar no mesmo dia", 400);
@@ -44,12 +39,15 @@ export const ensureWithinBusinessHours = (
   const startMinutes = getZonedMinutes(start, APP_TIME_ZONE);
   const endMinutes = getZonedMinutes(end, APP_TIME_ZONE);
 
-  const limitStart = shopLimits
-    ? shopLimits.businessStartHour * 60
-    : BUSINESS_START_MINUTES;
-  const limitEnd = shopLimits
-    ? shopLimits.businessEndHour * 60
-    : BUSINESS_END_MINUTES;
+  const schedules = shopLimits?.schedules || [];
+  const daySchedule = schedules.find((s) => s.dayOfWeek === startDay);
+
+  if (!daySchedule || !daySchedule.isOpen) {
+    throw new AppError("A barbearia não está aberta neste dia", 400);
+  }
+
+  const limitStart = daySchedule.startHour * 60;
+  const limitEnd = daySchedule.endHour * 60;
 
   if (startMinutes < limitStart || endMinutes > limitEnd) {
     const formatTime = (min: number) =>

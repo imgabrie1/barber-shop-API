@@ -4,7 +4,7 @@ import { returnMultipleShopSchema } from "../../schemas/barberServices.schema";
 
 const getShopsService = async () => {
   const shopRepo = AppDataSource.getRepository(Shop);
-  const shops = await shopRepo.find();
+  const shops = await shopRepo.find({ relations: ["schedules"] });
 
   return returnMultipleShopSchema.parse(shops);
 };
