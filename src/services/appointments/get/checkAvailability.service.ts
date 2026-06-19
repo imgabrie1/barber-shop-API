@@ -41,11 +41,23 @@ const checkAvailabilityService = async ({
     throw new AppError("Formato de data inválido. Use YYYY-MM-DD", 400);
   if (!shopId) throw new AppError("shopId é obrigatório", 400);
 
-  const shop = await shopRepo.findOneBy({ id: shopId });
+  const shop = await shopRepo.findOne({
+    where: { id: shopId },
+    relations: ["schedules"],
+  });
   if (!shop) throw new AppError("Loja não encontrada", 404);
 
-  const currentStartMinutes = shop.alwaysOpen ? 0 : shop.businessStartHour * 60;
-  const currentEndMinutes = shop.alwaysOpen ? 24 * 60 : shop.businessEndHour * 60;
+  const dateObj = new Date(`${date}T12:00:00Z`);
+  const dayOfWeek = dateObj.getDay();
+
+  const daySchedule = shop.schedules?.find(s => s.dayOfWeek === dayOfWeek);
+
+  if (!shop.alwaysOpen && (!daySchedule || !daySchedule.isOpen)) {
+    return [];
+  }
+
+  const currentStartMinutes = shop.alwaysOpen ? 0 : daySchedule!.startHour * 60;
+  const currentEndMinutes = shop.alwaysOpen ? 24 * 60 : daySchedule!.endHour * 60;
 
   let totalDurationMinutes = durationMinutes ?? 30;
   if (serviceIds && serviceIds.length > 0) {

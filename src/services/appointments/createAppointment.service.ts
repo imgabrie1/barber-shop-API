@@ -41,7 +41,10 @@ const createAppointmentService = async (
         throw new AppError("Cliente não encontrado", 404);
       }
 
-      const shop = await shopRepo.findOneBy({ id: shopId });
+      const shop = await shopRepo.findOne({
+        where: { id: shopId },
+        relations: ["schedules"],
+      });
       if (!shop) {
         throw new AppError("Loja não encontrada", 404);
       }

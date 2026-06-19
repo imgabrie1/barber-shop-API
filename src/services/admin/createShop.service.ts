@@ -7,10 +7,23 @@ import { returnShopSchema } from "../../schemas/barberServices.schema";
 const createShopService = async (shopData: iShop): Promise<any> => {
   const shopRepo = AppDataSource.getRepository(Shop);
 
+  let schedules = shopData.schedules;
+
+  if (!schedules || schedules.length === 0) {
+    schedules = [];
+    for (let i = 0; i <= 6; i++) {
+      schedules.push({
+        dayOfWeek: i,
+        startHour: 8,
+        endHour: 18,
+        isOpen: i >= 1 && i <= 6, // segunda a sabado
+      });
+    }
+  }
+
   const shop = shopRepo.create({
     ...shopData,
-    businessStartHour: shopData.businessStartHour ?? 8,
-    businessEndHour: shopData.businessEndHour ?? 18,
+    schedules: schedules as any,
   });
   await shopRepo.save(shop);
 

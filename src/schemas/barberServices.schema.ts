@@ -1,24 +1,21 @@
 import z, { string } from "zod";
 
+export const scheduleSchema = z.object({
+  id: z.string().optional(),
+  dayOfWeek: z.number().int().min(0).max(6),
+  startHour: z.number().int().min(0).max(23).default(8),
+  endHour: z.number().int().min(0).max(23).default(18),
+  isOpen: z.boolean().default(true),
+});
+
 export const shopBaseSchema = z.object({
   name: z.string(),
   address: z.string(),
   alwaysOpen: z.boolean().default(false),
-  businessStartHour: z.number().optional(),
-  businessEndHour: z.number().optional(),
+  schedules: z.array(scheduleSchema).optional(),
 });
 
-export const shopSchema = shopBaseSchema.refine(
-  (data) =>
-    data.alwaysOpen ||
-    (data.businessStartHour !== undefined &&
-      data.businessEndHour !== undefined),
-  {
-    message:
-      "businessStartHour e businessEndHour são obrigatórios quando alwaysOpen é false",
-    path: ["businessStartHour"],
-  },
-);
+export const shopSchema = shopBaseSchema;
 
 export const updateShopSchema = shopBaseSchema.partial();
 
