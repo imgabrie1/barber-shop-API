@@ -10,7 +10,7 @@ import {
   iAppointmentReturn,
 } from "../../interfaces/appointments.interface";
 import { returnAppointmentSchema } from "../../schemas/appointments.schema";
-import { In, LessThan, MoreThan } from "typeorm";
+import { In, LessThan, MoreThan, Not } from "typeorm";
 import roleEnum from "../../enum/role.enum";
 import { ensureWithinBusinessHours } from "../../utils/appointmentBusinessHours";
 import {
@@ -18,6 +18,7 @@ import {
   formatDateTimeInTimeZone,
   toUtcDate,
 } from "../../utils/timezone";
+import appointmentStatusEnum from "../../enum/appointmentStatus.enum";
 
 const createAppointmentService = async (
   appointmentData: iAppointment,
@@ -99,6 +100,7 @@ const createAppointmentService = async (
           barber: { id: barberId },
           startTime: LessThan(endDate),
           endTime: MoreThan(startDate),
+          status: Not(appointmentStatusEnum.COMPLETED),
         },
       });
 
@@ -107,6 +109,7 @@ const createAppointmentService = async (
           client: { id: clientId },
           startTime: LessThan(endDate),
           endTime: MoreThan(startDate),
+          status: Not(appointmentStatusEnum.COMPLETED),
         },
       });
 
