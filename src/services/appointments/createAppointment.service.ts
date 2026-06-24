@@ -19,6 +19,7 @@ import {
   toUtcDate,
 } from "../../utils/timezone";
 import appointmentStatusEnum from "../../enum/appointmentStatus.enum";
+import { notifyAppointmentCreated } from "../whatsapp/whatsapp.notifications";
 
 const createAppointmentService = async (
   appointmentData: iAppointment,
@@ -41,7 +42,10 @@ const createAppointmentService = async (
         throw new AppError("Cliente não encontrado", 404);
       }
 
-      const shop = await shopRepo.findOneBy({ id: shopId });
+      const shop = await shopRepo.findOne({
+        where: { id: shopId },
+        relations: ["schedules"],
+      });
       if (!shop) {
         throw new AppError("Loja não encontrada", 404);
       }
@@ -151,6 +155,17 @@ const createAppointmentService = async (
         shop: shop,
       };
     },
+  );
+
+  notifyAppointmentCreated({
+    clientPhone: result.client.phoneNumber,
+    clientName: result.client.name,
+    barberName: result.barber.name,
+    shopName: result.shop.name,
+    startTime: result.startTime,
+    services: result.services.map((s) => s.name),
+  }).catch((err) =>
+    console.error("[WhatsApp] Falha ao notificar criação de agendamento:", err)
   );
 
   return returnAppointmentSchema.parse({

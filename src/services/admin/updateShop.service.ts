@@ -9,7 +9,10 @@ const updateShopService = async (
 ): Promise<any> => {
   const shopRepo = AppDataSource.getRepository(Shop);
 
-  const shop = await shopRepo.findOneBy({ id: shopId });
+  const shop = await shopRepo.findOne({
+    where: { id: shopId },
+    relations: ["schedules"],
+  });
 
   if (!shop) {
     throw new AppError("Shop não encontrada", 404);
@@ -17,7 +20,7 @@ const updateShopService = async (
 
   const updatedShop = shopRepo.create({
     ...shop,
-    ...shopData,
+    ...(shopData as any),
   });
 
   await shopRepo.save(updatedShop);

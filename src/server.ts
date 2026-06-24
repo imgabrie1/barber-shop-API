@@ -1,6 +1,7 @@
 import app from "./app";
 import axios from "axios";
 import { AppDataSource } from "./data-source";
+import { initWhatsApp } from "./services/whatsapp/whatsapp.client";
 
 const PORT: number = Number(process.env.PORT) || 3000;
 const SERVER_URL = process.env.SERVER_URL || `http://localhost:${PORT}`;
@@ -9,6 +10,11 @@ AppDataSource.initialize()
 
   .then(() => {
     console.log("Database connected!");
+
+    initWhatsApp().catch((err) =>
+      console.error("[WhatsApp] Falha ao inicializar:", err)
+    );
+
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
       if (process.env.NODE_ENV === "production") {
