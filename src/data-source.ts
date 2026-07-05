@@ -8,7 +8,7 @@ const dataSourceConfig = (): DataSourceOptions => {
   const entitiesPath: string = path.join(__dirname, "./entities/**.{ts,js}");
   const migrationsPath: string = path.join(
     __dirname,
-    "./migrations/**.{ts,js}",
+    "./migrations/**.{ts,js}"
   );
 
   const dbUrl: string | undefined = process.env.DATABASE_URL;
@@ -39,11 +39,10 @@ const dataSourceConfig = (): DataSourceOptions => {
   const sslConfig =
     process.env.NODE_ENV === "production"
       ? {
-          ca: getCaCert(),
-
-          rejectUnauthorized: true,
-        }
-      : { rejectUnauthorized: false };
+            ca: getCaCert(),
+            rejectUnauthorized: true,
+          }
+        : { rejectUnauthorized: false };
 
   console.log("--- DATABASE DEBUG ---");
   console.log("NODE_ENV:", process.env.NODE_ENV);
@@ -64,3 +63,4 @@ const dataSourceConfig = (): DataSourceOptions => {
 const AppDataSource = new DataSource(dataSourceConfig());
 
 export { AppDataSource };
+
