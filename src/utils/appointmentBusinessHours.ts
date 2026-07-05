@@ -7,15 +7,7 @@ import {
 } from "./timezone";
 import { z } from "zod";
 
-const envSchema = z.object({
-  BUSINESS_START_MINUTES_ENV: z.coerce.number().default(8),
-  BUSINESS_END_MINUTES_ENV: z.coerce.number().default(18),
-});
 
-const env = envSchema.parse(process.env);
-
-export const BUSINESS_START_MINUTES = env.BUSINESS_START_MINUTES_ENV * 60;
-export const BUSINESS_END_MINUTES = env.BUSINESS_END_MINUTES_ENV * 60;
 
 import { ShopSchedule } from "../entities/shopSchedule.entity";
 
