@@ -28,18 +28,18 @@ const dataSourceConfig = (): DataSourceOptions => {
     };
   }
 
-  // const getCaCert = () => {
-  //   if (process.env.DB_SSL_CA) {
-  //     return process.env.DB_SSL_CA;
-  //   }
-  //   const caPath = path.resolve(__dirname, "../cert/ca.pem");
-  //   return fs.readFileSync(caPath).toString();
-  // };
+  const getCaCert = () => {
+    if (process.env.DB_SSL_CA) {
+      return process.env.DB_SSL_CA;
+    }
+    const caPath = path.resolve(__dirname, "../cert/ca.pem");
+    return fs.readFileSync(caPath).toString();
+  };
 
   const sslConfig =
     process.env.NODE_ENV === "production"
       ? {
-          // ca: getCaCert(),
+          ca: getCaCert(),
 
           rejectUnauthorized: true,
         }
