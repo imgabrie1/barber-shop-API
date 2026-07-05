@@ -33,7 +33,7 @@ const dataSourceConfig = (): DataSourceOptions => {
       return process.env.DB_SSL_CA;
     }
     const caPath = path.resolve(__dirname, "../cert/ca.pem");
-    return fs.readFileSync(caPath).toString();
+    return fs.readFileSync(caPath).toString().replace(/\\n/g, '\n');
   };
 
   const sslConfig =
