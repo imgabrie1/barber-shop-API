@@ -30,7 +30,8 @@ const dataSourceConfig = (): DataSourceOptions => {
 
   const getCaCert = () => {
     if (process.env.DB_SSL_CA) {
-      return process.env.DB_SSL_CA;
+      // Env vars no Render chegam com \n literais (escaped) — precisa converter em quebras de linha reais
+      return process.env.DB_SSL_CA.replace(/\\n/g, '\n');
     }
     const caPath = path.resolve(__dirname, "../cert/ca.pem");
     return fs.readFileSync(caPath).toString().replace(/\\n/g, '\n');
