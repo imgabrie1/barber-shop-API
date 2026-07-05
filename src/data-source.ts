@@ -8,7 +8,7 @@ const dataSourceConfig = (): DataSourceOptions => {
   const entitiesPath: string = path.join(__dirname, "./entities/**.{ts,js}");
   const migrationsPath: string = path.join(
     __dirname,
-    "./migrations/**.{ts,js}"
+    "./migrations/**.{ts,js}",
   );
 
   const dbUrl: string | undefined = process.env.DATABASE_URL;
@@ -33,16 +33,22 @@ const dataSourceConfig = (): DataSourceOptions => {
       return process.env.DB_SSL_CA;
     }
     const caPath = path.resolve(__dirname, "../cert/ca.pem");
-    return fs.readFileSync(caPath).toString().replace(/\\n/g, '\n');
+    return fs.readFileSync(caPath).toString();
   };
+
+  const ca = getCaCert();
+
+  console.log("Tem \\n literal:", ca.includes("\\n"));
+  console.log("Tem quebra real:", ca.includes("\n"));
+  console.log("Quantidade de linhas:", ca.split("\n").length);
 
   const sslConfig =
     process.env.NODE_ENV === "production"
       ? {
-            ca: getCaCert(),
-            rejectUnauthorized: true,
-          }
-        : { rejectUnauthorized: false };
+          ca: getCaCert(),
+          rejectUnauthorized: true,
+        }
+      : { rejectUnauthorized: false };
 
   console.log("--- DATABASE DEBUG ---");
   console.log("NODE_ENV:", process.env.NODE_ENV);
@@ -63,4 +69,3 @@ const dataSourceConfig = (): DataSourceOptions => {
 const AppDataSource = new DataSource(dataSourceConfig());
 
 export { AppDataSource };
-
