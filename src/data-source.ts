@@ -28,34 +28,36 @@ const dataSourceConfig = (): DataSourceOptions => {
     };
   }
 
-  const getCaCert = () => {
-    if (process.env.DB_SSL_CA) {
-      // Env vars no Render chegam com \n literais (escaped) — precisa converter em quebras de linha reais
-      return process.env.DB_SSL_CA.replace(/\\n/g, '\n');
-    }
-    const caPath = path.resolve(__dirname, "../cert/ca.pem");
-    return fs.readFileSync(caPath).toString().replace(/\\n/g, '\n');
+  const getCaCert = (): string => {
+    const raw = process.env.DB_SSL_CA
+      ? process.env.DB_SSL_CA
+      : fs.readFileSync(path.resolve(__dirname, "../cert/ca.pem")).toString();
+
+    return raw.replace(/\\n/g, "\n").replace(/\r\n/g, "\n").trim();
   };
+
+  const cleanDbUrl = dbUrl.replace(/[?&]sslmode=[^&]*/g, "").replace(/\?$/, "");
 
   const sslConfig =
     process.env.NODE_ENV === "production"
       ? {
-            ca: getCaCert(),
-            rejectUnauthorized: true,
-          }
-        : { rejectUnauthorized: false };
+          ca: [getCaCert()],
+          rejectUnauthorized: true,
+        }
+      : { rejectUnauthorized: false };
 
   console.log("--- DATABASE DEBUG ---");
   console.log("NODE_ENV:", process.env.NODE_ENV);
-  console.log("SSL Config:", sslConfig);
+  console.log("Clean URL (sem sslmode):", cleanDbUrl.replace(/\/\/.*@/, "//[REDACTED]@"));
+  console.log("CA cert primeiros 60 chars:", getCaCert().slice(0, 60));
   console.log("--- END DATABASE DEBUG ---");
 
   return {
     type: "postgres",
-    url: dbUrl,
+    url: cleanDbUrl,
     synchronize: false,
     ssl: sslConfig,
-    logging: true,
+    logging: false,
     migrations: [migrationsPath],
     entities: [entitiesPath],
   };
