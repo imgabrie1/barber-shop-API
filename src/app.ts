@@ -7,6 +7,7 @@ import userRoutes from "./routers/user.routes";
 import serviceRoutes from "./routers/services.routes";
 import appointmentsRoutes from "./routers/appointments.routes";
 import adminRoutes from "./routers/admin.routes";
+import { whatsappRouter } from "./routers/whatsapp.router";
 
 const app: Application = express();
 
@@ -20,6 +21,7 @@ app.use("/user", userRoutes);
 app.use("/service", serviceRoutes);
 app.use("/appointment", appointmentsRoutes);
 app.use("/admin", adminRoutes);
+app.use("/whatsapp", whatsappRouter);
 
 app.get("/health", (_, res) => {
   res.status(200).send("ok");
