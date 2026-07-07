@@ -58,6 +58,7 @@ const dataSourceConfig = (): DataSourceOptions => {
     synchronize: false,
     ssl: sslConfig,
     logging: false,
+    migrationsRun: true,
     migrations: [migrationsPath],
     entities: [entitiesPath],
   };

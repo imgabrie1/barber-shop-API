@@ -1,31 +1,31 @@
 import makeWASocket, {
   DisconnectReason,
   fetchLatestBaileysVersion,
-  useMultiFileAuthState,
   type WASocket,
 } from "@whiskeysockets/baileys";
 import { Boom } from "@hapi/boom";
-import qrcode from "qrcode-terminal";
 import pino from "pino";
-import path from "path";
-
-const AUTH_FOLDER = path.resolve(__dirname, "../../../.whatsapp_session");
+import { useTypeormAuthState } from "./useTypeormAuthState";
+import { AppDataSource } from "../../data-source";
+import { WhatsappSession } from "../../entities/whatsappSession.entity";
 
 let client: WASocket | null = null;
 let isConnected = false;
 let isConnecting = false;
+let currentQrCode: string | null = null;
 
 const logger = pino({ level: "silent" });
 
 export const getWhatsAppClient = (): WASocket | null => client;
 export const isWhatsAppConnected = (): boolean => isConnected;
+export const getWhatsAppQrCode = (): string | null => currentQrCode;
 
 export const initWhatsApp = async (): Promise<void> => {
   if (isConnecting || isConnected) return;
   isConnecting = true;
 
   try {
-    const { state, saveCreds } = await useMultiFileAuthState(AUTH_FOLDER);
+    const { state, saveCreds } = await useTypeormAuthState();
     const { version } = await fetchLatestBaileysVersion();
 
     const sock = makeWASocket({
@@ -40,17 +40,18 @@ export const initWhatsApp = async (): Promise<void> => {
       const { connection, lastDisconnect, qr } = update;
 
       if (qr) {
+        currentQrCode = qr;
         console.log("\n========================================");
-        console.log("  ESCANEIE O QR CODE ABAIXO COM SEU WHATSAPP");
-        console.log("  (Configurações > Dispositivos conectados)");
+        console.log("  [WhatsApp] NOVO QR CODE GERADO!");
+        console.log("  Acesse o frontend para conectar.");
         console.log("========================================\n");
-        qrcode.generate(qr, { small: true });
       }
 
       if (connection === "close") {
         isConnected = false;
         client = null;
         isConnecting = false;
+        currentQrCode = null;
 
         const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
         const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
@@ -60,13 +61,20 @@ export const initWhatsApp = async (): Promise<void> => {
         if (shouldReconnect) {
           setTimeout(() => initWhatsApp(), 5000);
         } else {
-          console.log("[WhatsApp] Sessão encerrada. Delete a pasta .whatsapp_session e reinicie.");
+          console.log("[WhatsApp] Sessão encerrada manualmente ou desconectada pelo usuário. Limpando dados e reiniciando para novo QR Code...");
+          AppDataSource.getRepository(WhatsappSession).clear().then(() => {
+             setTimeout(() => initWhatsApp(), 2000);
+          }).catch(err => {
+            console.error("Erro ao limpar sessão do banco:", err);
+            setTimeout(() => initWhatsApp(), 5000);
+          });
         }
       }
 
       if (connection === "open") {
         isConnected = true;
         isConnecting = false;
+        currentQrCode = null;
         client = sock;
         console.log("\n✅ [WhatsApp] Conectado com sucesso! Notificações ativadas.\n");
       }
