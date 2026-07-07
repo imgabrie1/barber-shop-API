@@ -7,7 +7,7 @@ import userRoutes from "./routers/user.routes";
 import serviceRoutes from "./routers/services.routes";
 import appointmentsRoutes from "./routers/appointments.routes";
 import adminRoutes from "./routers/admin.routes";
-import { whatsappRouter } from "./routers/whatsapp.router";
+import { whatsappRouter } from "./routers/whatsapp.routes";
 
 const app: Application = express();
 
