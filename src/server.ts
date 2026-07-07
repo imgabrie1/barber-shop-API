@@ -7,12 +7,11 @@ const PORT: number = Number(process.env.PORT) || 3000;
 const SERVER_URL = process.env.SERVER_URL || `http://localhost:${PORT}`;
 
 AppDataSource.initialize()
-
   .then(() => {
     console.log("Database connected!");
 
     initWhatsApp().catch((err) =>
-      console.error("[WhatsApp] Falha ao inicializar:", err)
+      console.error("[WhatsApp] Falha ao inicializar de forma segura:", err),
     );
 
     app.listen(PORT, () => {
