@@ -20,11 +20,21 @@ export const getWhatsAppClient = (): WASocket | null => client;
 export const isWhatsAppConnected = (): boolean => isConnected;
 export const getWhatsAppQrCode = (): string | null => currentQrCode;
 
-export const initWhatsApp = async (): Promise<void> => {
+export const initWhatsApp = async (forceStart = false): Promise<void> => {
   if (isConnecting || isConnected) return;
-  isConnecting = true;
 
   try {
+    const repository = AppDataSource.getRepository(WhatsappSession);
+    const hasSession = await repository.findOne({ where: { id: "creds" } });
+
+    if (!hasSession && !forceStart) {
+      console.log(
+        "[WhatsApp] Nenhuma sessão ativa encontrada. Aguardando comando do Frontend para iniciar...",
+      );
+      return;
+    }
+
+    isConnecting = true;
     const { state, saveCreds } = await useTypeormAuthState();
     const { version } = await fetchLatestBaileysVersion();
 
@@ -41,10 +51,6 @@ export const initWhatsApp = async (): Promise<void> => {
 
       if (qr) {
         currentQrCode = qr;
-        console.log("\n========================================");
-        console.log("  [WhatsApp] NOVO QR CODE GERADO!");
-        console.log("  Acesse o frontend para conectar.");
-        console.log("========================================\n");
       }
 
       if (connection === "close") {
@@ -56,18 +62,26 @@ export const initWhatsApp = async (): Promise<void> => {
         const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
         const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
 
-        console.log(`[WhatsApp] Desconectado. Código: ${statusCode}. Reconectando: ${shouldReconnect}`);
+        console.log(
+          `[WhatsApp] Status: Desconectado. Código: ${statusCode}. Reconectando: ${shouldReconnect}`,
+        );
 
         if (shouldReconnect) {
-          setTimeout(() => initWhatsApp(), 5000);
+          setTimeout(() => initWhatsApp(forceStart), 5000);
         } else {
-          console.log("[WhatsApp] Sessão encerrada manualmente ou desconectada pelo usuário. Limpando dados e reiniciando para novo QR Code...");
-          AppDataSource.getRepository(WhatsappSession).clear().then(() => {
-             setTimeout(() => initWhatsApp(), 2000);
-          }).catch(err => {
-            console.error("Erro ao limpar sessão do banco:", err);
-            setTimeout(() => initWhatsApp(), 5000);
-          });
+          console.log(
+            "[WhatsApp] Sessão encerrada manualmente. Limpando dados...",
+          );
+          AppDataSource.getRepository(WhatsappSession)
+            .clear()
+            .then(() => {
+              console.log(
+                "[WhatsApp] Pronto para uma nova inicialização sob demanda.",
+              );
+            })
+            .catch((err) => {
+              console.error("Erro ao limpar sessão do banco:", err);
+            });
         }
       }
 
@@ -76,7 +90,9 @@ export const initWhatsApp = async (): Promise<void> => {
         isConnecting = false;
         currentQrCode = null;
         client = sock;
-        console.log("\n✅ [WhatsApp] Conectado com sucesso! Notificações ativadas.\n");
+        console.log(
+          "\n✅ [WhatsApp] Conectado com sucesso! Notificações ativadas.\n",
+        );
       }
     });
 
