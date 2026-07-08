@@ -41,7 +41,7 @@ export class Service {
   })
   defaultBarberCommissionPercentage: number;
 
-  @ManyToMany(() => Shop, (shop) => shop.services)
+  @ManyToMany(() => Shop, (shop) => shop.services, { onDelete: "CASCADE" })
   @JoinTable({
     name: "service_shops",
     joinColumn: { name: "service_id", referencedColumnName: "id" },
