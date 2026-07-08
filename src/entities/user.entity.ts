@@ -42,7 +42,7 @@ export class User {
   @Column({ default: true })
   isActive: boolean;
 
-  @ManyToOne(() => Shop, (shop) => shop.users, { nullable: true })
+  @ManyToOne(() => Shop, (shop) => shop.users, { nullable: true, onDelete: "CASCADE" })
   @JoinColumn({ name: "shop_id" })
   shop: Shop;
 
