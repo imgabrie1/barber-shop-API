@@ -78,9 +78,9 @@ export const notifyAppointmentCreated = async (params: {
 };
 
 /**
- * envia lembrete antes do horário agendado (usado pelo cron job).
+ * envia lembrete ao CLIENTE antes do horário agendado (usado pelo cron job).
  */
-export const notifyAppointmentReminder = async (params: {
+export const notifyAppointmentReminderClient = async (params: {
   clientPhone: string;
   clientName: string;
   barberName: string;
@@ -93,10 +93,36 @@ export const notifyAppointmentReminder = async (params: {
 
   const message =
     `⏰ *Lembrete de agendamento!*\n\n` +
-    `Fala, *${clientName}*! Passando pra lembrar que você tem horário hoje às *${formattedTime}* com o *${barberName}* na unidade *${shopName}*.\n\n` +
+    `Fala, *${clientName}*! Passando pra lembrar que você tem horário hoje às *${formattedTime}* com o(a) *${barberName}* na unidade *${shopName}*.\n\n` +
     `_Não se esqueça! Se não puder comparecer, avise o quanto antes pelo site._ 🙏`;
 
   await sendMessage(clientPhone, message);
+};
+
+/**
+ * envia lembrete ao BARBEIRO/PROFISSIONAL antes do horário agendado (usado pelo cron job).
+ */
+export const notifyAppointmentReminderBarber = async (params: {
+  barberPhone: string;
+  barberName: string;
+  clientName: string;
+  shopName: string;
+  startTime: Date;
+  services: string[];
+}): Promise<void> => {
+  const { barberPhone, barberName, clientName, shopName, startTime, services } = params;
+
+  const formattedTime = formatDateTimeInTimeZone(startTime, APP_TIME_ZONE).slice(11, 16);
+  const serviceList = services.join(", ");
+
+  const message =
+    `🗓️ *Lembrete de atendimento!*\n\n` +
+    `E aí, *${barberName}*! Você tem um cliente chegando hoje às *${formattedTime}* na unidade *${shopName}*.\n\n` +
+    `👤 *Cliente:* ${clientName}\n` +
+    `💈 *Serviço(s):* ${serviceList}\n\n` +
+    `_Tudo pronto pra receber! 💪_`;
+
+  await sendMessage(barberPhone, message);
 };
 
 /**
