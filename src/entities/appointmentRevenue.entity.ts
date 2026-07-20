@@ -7,6 +7,7 @@ import {
   JoinColumn,
 } from "typeorm";
 import { Shop } from "./shop.entity";
+import { Tenant } from "./tenant.entity";
 
 @Entity("appointment_revenues")
 export class AppointmentRevenue {
@@ -49,6 +50,10 @@ export class AppointmentRevenue {
   @ManyToOne(() => Shop, (shop) => shop.revenues, { onDelete: "CASCADE" })
   @JoinColumn({ name: "shop_id" })
   shop: Shop;
+
+  @ManyToOne(() => Tenant, { nullable: false, onDelete: "CASCADE" })
+  @JoinColumn({ name: "tenant_id" })
+  tenant: Tenant;
 
   @CreateDateColumn()
   recordedAt: Date;

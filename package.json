@@ -10,7 +10,9 @@
     "dev": "rm -rf dist && tsc && NODE_TLS_REJECT_UNAUTHORIZED=0 ts-node-dev --cls --rs --ignore-watch node_modules dist/server.js",
     "start:local": "NODE_TLS_REJECT_UNAUTHORIZED=0 node dist/server.js",
     "typeorm": "typeorm-ts-node-commonjs",
-    "reset": "rm -rf dist rm -rf src/migrations"
+    "reset": "rm -rf dist rm -rf src/migrations",
+    "seed": "ts-node src/seed-super-admin.ts",
+    "userstests": "ts-node src/seed-test-data.ts"
   },
   "keywords": [],
   "author": "",

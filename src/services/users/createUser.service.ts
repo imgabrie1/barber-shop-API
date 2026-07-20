@@ -2,10 +2,12 @@ import { DeepPartial } from "typeorm";
 import { AppDataSource } from "../../data-source";
 import { User } from "../../entities/user.entity";
 import { Shop } from "../../entities/shop.entity";
+import { Tenant } from "../../entities/tenant.entity";
 import { AppError } from "../../errors";
-import { iRepoUser, iUser, iUserReturn } from "../../interfaces/user.interface";
+import { iUser, iUserReturn } from "../../interfaces/user.interface";
 import { returnUserSchemaComplete } from "../../schemas/users.schema";
 import roleEnum from "../../enum/role.enum";
+import { TenantContext } from "../../utils/tenantContext";
 
 const createUserService = async (userData: iUser): Promise<iUserReturn> => {
   const repoUser = AppDataSource.getRepository(User);
@@ -18,7 +20,7 @@ const createUserService = async (userData: iUser): Promise<iUserReturn> => {
   });
 
   if (existingUser) {
-    throw new AppError("Número de telefone já existe", 409);
+    throw new AppError("Número de telefone já cadastrado neste tenant", 409);
   }
 
   const { shopId, ...userCleanData } = userData;
@@ -42,9 +44,13 @@ const createUserService = async (userData: iUser): Promise<iUserReturn> => {
     }
   }
 
+  const tenantId = TenantContext.getTenantId();
+  const tenant = tenantId ? ({ id: tenantId } as Tenant) : undefined;
+
   const user = repoUser.create({
     ...userCleanData,
-    shop: shop,
+    shop: shop ?? undefined,
+    tenant,
   } as DeepPartial<User>);
 
   await repoUser.save(user);

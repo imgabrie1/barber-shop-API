@@ -8,7 +8,6 @@ const ensureIsBarberMiddleware = async (req: Request, res: Response, next: NextF
     if(authenticatedUser.role !== "barber"){
         throw new AppError("Permissão insuficiente (nao é barber)", 403)
     }
-    console.log("user:", authenticatedUser.id)
     return next()
 }
 

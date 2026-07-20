@@ -1,3 +1,4 @@
+import "./utils/tenantQueryPatch";
 import express, { Application } from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -8,6 +9,9 @@ import serviceRoutes from "./routers/services.routes";
 import appointmentsRoutes from "./routers/appointments.routes";
 import adminRoutes from "./routers/admin.routes";
 import { whatsappRouter } from "./routers/whatsapp.routes";
+import tenantRoutes from "./routers/tenant.routes";
+import platformRoutes from "./routers/platform.routes";
+import { resolveTenantMiddleware } from "./middlewares/resolveTenant.middleware";
 
 const app: Application = express();
 
@@ -16,6 +20,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use(resolveTenantMiddleware);
+
+app.use("/tenant", tenantRoutes);
+app.use("/platform", platformRoutes);
 app.use("/login", loginRoutes);
 app.use("/user", userRoutes);
 app.use("/service", serviceRoutes);

@@ -11,6 +11,7 @@ import { User } from "./user.entity";
 import { AppointmentService } from "./appointmentServices.entity";
 import appointmentStatusEnum from "../enum/appointmentStatus.enum";
 import { Shop } from "./shop.entity";
+import { Tenant } from "./tenant.entity";
 
 @Entity("appointments")
 @Index("IDX_APPOINTMENT_CLIENT", ["client"])
@@ -50,6 +51,13 @@ export class Appointment {
   @ManyToOne(() => Shop, (shop) => shop.appointments, { onDelete: "CASCADE" })
   @JoinColumn({ name: "shop_id" })
   shop: Shop;
+
+  @ManyToOne(() => Tenant, { nullable: false, onDelete: "CASCADE" })
+  @JoinColumn({ name: "tenant_id" })
+  tenant: Tenant;
+
+  @Column({ default: false, name: "reminder_sent" })
+  reminderSent: boolean;
 
   @OneToMany(() => AppointmentService, (as) => as.appointment)
   appointmentServices: AppointmentService[];

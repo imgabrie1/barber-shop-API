@@ -7,6 +7,7 @@ import roleEnum from "../../enum/role.enum";
 import { AppError } from "../../errors";
 import { returnAppointmentSchema } from "../../schemas/appointments.schema";
 import { APP_TIME_ZONE, formatDateTimeInTimeZone } from "../../utils/timezone";
+import { TenantContext } from "../../utils/tenantContext";
 import { notifyAppointmentCancelled, notifyAppointmentConfirmed } from "../whatsapp/whatsapp.notifications"; 
 
 const updateAppointmentStatusService = async (
@@ -128,25 +129,33 @@ const updateAppointmentStatusService = async (
     },
   );
 
+  const tenantId = TenantContext.getTenantId();
+
   if (newStatus === appointmentStatusEnum.CANCELLED) {
-    notifyAppointmentCancelled({
-      clientPhone: appointment.client.phoneNumber,
-      clientName: appointment.client.name,
-      shopName: appointment.shop.name,
-      startTime: appointment.startTime,
-    }).catch((err) =>
-      console.error("[WhatsApp] Falha ao notificar cancelamento:", err)
-    );
+    if (tenantId) {
+      notifyAppointmentCancelled({
+        tenantId,
+        clientPhone: appointment.client.phoneNumber,
+        clientName: appointment.client.name,
+        shopName: appointment.shop.name,
+        startTime: appointment.startTime,
+      }).catch((err) =>
+        console.error("[WhatsApp] Falha ao notificar cancelamento:", err)
+      );
+    }
   } else if (newStatus === appointmentStatusEnum.CONFIRMED) {
-    notifyAppointmentConfirmed({
-      clientPhone: appointment.client.phoneNumber,
-      clientName: appointment.client.name,
-      barberName: appointment.barber.name,
-      shopName: appointment.shop.name,
-      startTime: appointment.startTime,
-    }).catch((err) =>
-      console.error("[WhatsApp] Falha ao notificar confirmação:", err)
-    );
+    if (tenantId) {
+      notifyAppointmentConfirmed({
+        tenantId,
+        clientPhone: appointment.client.phoneNumber,
+        clientName: appointment.client.name,
+        barberName: appointment.barber.name,
+        shopName: appointment.shop.name,
+        startTime: appointment.startTime,
+      }).catch((err) =>
+        console.error("[WhatsApp] Falha ao notificar confirmação:", err)
+      );
+    }
   }
 
   const formattedAppointment = {
