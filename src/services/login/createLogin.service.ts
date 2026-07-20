@@ -4,15 +4,32 @@ import { AppDataSource } from "../../data-source";
 import { User } from "../../entities/user.entity";
 import { AppError } from "../../errors";
 import { iLogin } from "../../interfaces/login.interface";
+import { TenantContext } from "../../utils/tenantContext";
+import roleEnum from "../../enum/role.enum";
 
 const createLoginService = async (
   loginData: iLogin,
-): Promise<{ token: string; refreshToken: string }> => {
+): Promise<{ token: string; refreshToken: string; user: User }> => {
   const repoUser = AppDataSource.getRepository(User);
 
-  const user = await repoUser.findOneBy({
-    phoneNumber: loginData.phoneNumber,
-  });
+  let user = await TenantContext.bypass(() =>
+    repoUser.findOne({
+      where: {
+        phoneNumber: loginData.phoneNumber,
+        role: roleEnum.SUPER_ADMIN,
+      },
+      relations: ["tenant"],
+    })
+  );
+
+  if (!user) {
+    user = await repoUser.findOne({
+      where: {
+        phoneNumber: loginData.phoneNumber,
+      },
+      relations: ["tenant"],
+    });
+  }
 
   if (!user) {
     throw new AppError("Credenciais inválidas", 401);
@@ -26,6 +43,7 @@ const createLoginService = async (
   const token = jwt.sign(
     {
       role: user.role,
+      tenantId: user.tenant ? user.tenant.id : null,
     },
     process.env.SECRET_KEY!,
     {
@@ -37,6 +55,7 @@ const createLoginService = async (
   const refreshToken = jwt.sign(
     {
       role: user.role,
+      tenantId: user.tenant ? user.tenant.id : null,
     },
     process.env.SECRET_KEY!,
     {
@@ -45,9 +64,11 @@ const createLoginService = async (
     },
   );
 
-  await repoUser.update(user.id, { refreshToken: refreshToken });
+  await TenantContext.bypass(() =>
+    repoUser.update(user.id, { refreshToken: refreshToken })
+  );
 
-  return { token, refreshToken };
+  return { token, refreshToken, user };
 };
 
 export default createLoginService;

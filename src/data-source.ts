@@ -3,6 +3,7 @@ import "dotenv/config";
 import "reflect-metadata";
 import { DataSource, DataSourceOptions } from "typeorm";
 import path from "path";
+import { TenantSubscriber } from "./subscribers/tenant.subscriber";
 
 const dataSourceConfig = (): DataSourceOptions => {
   const entitiesPath: string = path.join(__dirname, "./entities/**.{ts,js}");
@@ -61,6 +62,7 @@ const dataSourceConfig = (): DataSourceOptions => {
     migrationsRun: true,
     migrations: [migrationsPath],
     entities: [entitiesPath],
+    subscribers: [TenantSubscriber],
   };
 };
 

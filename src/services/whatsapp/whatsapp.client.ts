@@ -9,38 +9,60 @@ import { useTypeormAuthState } from "./useTypeormAuthState";
 import { AppDataSource } from "../../data-source";
 import { WhatsappSession } from "../../entities/whatsappSession.entity";
 
-let client: WASocket | null = null;
-let isConnected = false;
-let isConnecting = false;
-let currentQrCode: string | null = null;
+interface ClientState {
+  client: WASocket | null;
+  isConnected: boolean;
+  isConnecting: boolean;
+  currentQrCode: string | null;
+}
+
+const clients = new Map<string, ClientState>();
 
 const logger = pino({ level: "silent" });
 
-export const getWhatsAppClient = (): WASocket | null => client;
-export const isWhatsAppConnected = (): boolean => isConnected;
-export const getWhatsAppQrCode = (): string | null => currentQrCode;
+const getState = (tenantId: string): ClientState => {
+  let state = clients.get(tenantId);
+  if (!state) {
+    state = { client: null, isConnected: false, isConnecting: false, currentQrCode: null };
+    clients.set(tenantId, state);
+  }
+  return state;
+};
 
-export const initWhatsApp = async (forceStart = false): Promise<void> => {
-  if (isConnecting || isConnected) return;
+export const getWhatsAppClient = (tenantId: string): WASocket | null => {
+  return getState(tenantId).client;
+};
+
+export const isWhatsAppConnected = (tenantId: string): boolean => {
+  return getState(tenantId).isConnected;
+};
+
+export const getWhatsAppQrCode = (tenantId: string): string | null => {
+  return getState(tenantId).currentQrCode;
+};
+
+export const initWhatsApp = async (tenantId: string, forceStart = false): Promise<void> => {
+  const state = getState(tenantId);
+  if (state.isConnecting || state.isConnected) return;
 
   try {
     const repository = AppDataSource.getRepository(WhatsappSession);
-    const hasSession = await repository.findOne({ where: { id: "creds" } });
+    const hasSession = await repository.findOne({ where: { id: "creds", tenantId } });
 
     if (!hasSession && !forceStart) {
       console.log(
-        "[WhatsApp] Nenhuma sessão ativa encontrada. Aguardando comando do Frontend para iniciar...",
+        `[WhatsApp][${tenantId}] Nenhuma sessão ativa encontrada. Aguardando comando do Frontend para iniciar...`,
       );
       return;
     }
 
-    isConnecting = true;
-    const { state, saveCreds } = await useTypeormAuthState();
+    state.isConnecting = true;
+    const { state: authState, saveCreds } = await useTypeormAuthState(tenantId);
     const { version } = await fetchLatestBaileysVersion();
 
     const sock = makeWASocket({
       version,
-      auth: state,
+      auth: authState,
       logger,
       printQRInTerminal: false,
       browser: ["BarberShop Bot", "Chrome", "1.0.0"],
@@ -50,55 +72,59 @@ export const initWhatsApp = async (forceStart = false): Promise<void> => {
       const { connection, lastDisconnect, qr } = update;
 
       if (qr) {
-        currentQrCode = qr;
+        state.currentQrCode = qr;
       }
 
       if (connection === "close") {
-        isConnected = false;
-        client = null;
-        isConnecting = false;
-        currentQrCode = null;
+        state.isConnected = false;
+        state.client = null;
+        state.isConnecting = false;
+        state.currentQrCode = null;
 
         const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
         const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
 
         console.log(
-          `[WhatsApp] Status: Desconectado. Código: ${statusCode}. Reconectando: ${shouldReconnect}`,
+          `[WhatsApp][${tenantId}] Status: Desconectado. Código: ${statusCode}. Reconectando: ${shouldReconnect}`,
         );
 
         if (shouldReconnect) {
-          setTimeout(() => initWhatsApp(forceStart), 5000);
+          setTimeout(() => initWhatsApp(tenantId, forceStart), 5000);
         } else {
           console.log(
-            "[WhatsApp] Sessão encerrada manualmente. Limpando dados...",
+            `[WhatsApp][${tenantId}] Sessão encerrada manualmente. Limpando dados...`,
           );
           AppDataSource.getRepository(WhatsappSession)
-            .clear()
+            .createQueryBuilder()
+            .delete()
+            .from(WhatsappSession)
+            .where("tenant_id = :tenantId", { tenantId })
+            .execute()
             .then(() => {
               console.log(
-                "[WhatsApp] Pronto para uma nova inicialização sob demanda.",
+                `[WhatsApp][${tenantId}] Pronto para uma nova inicialização sob demanda.`,
               );
             })
             .catch((err) => {
-              console.error("Erro ao limpar sessão do banco:", err);
+              console.error(`[WhatsApp][${tenantId}] Erro ao limpar sessão do banco:`, err);
             });
         }
       }
 
       if (connection === "open") {
-        isConnected = true;
-        isConnecting = false;
-        currentQrCode = null;
-        client = sock;
+        state.isConnected = true;
+        state.isConnecting = false;
+        state.currentQrCode = null;
+        state.client = sock;
         console.log(
-          "\n✅ [WhatsApp] Conectado com sucesso! Notificações ativadas.\n",
+          `\n✅ [WhatsApp][${tenantId}] Conectado com sucesso! Notificações ativadas.\n`,
         );
       }
     });
 
     sock.ev.on("creds.update", saveCreds);
   } catch (error) {
-    isConnecting = false;
-    console.error("[WhatsApp] Erro ao inicializar:", error);
+    state.isConnecting = false;
+    console.error(`[WhatsApp][${tenantId}] Erro ao inicializar:`, error);
   }
 };

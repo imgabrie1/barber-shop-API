@@ -10,7 +10,9 @@ import { WhatsappSession } from "../../entities/whatsappSession.entity";
 
 const repository = AppDataSource.getRepository(WhatsappSession);
 
-export const useTypeormAuthState = async (): Promise<{
+export const useTypeormAuthState = async (
+  tenantId: string,
+): Promise<{
   state: AuthenticationState;
   saveCreds: () => Promise<void>;
 }> => {
@@ -19,6 +21,7 @@ export const useTypeormAuthState = async (): Promise<{
       const informationToStore = JSON.stringify(data, BufferJSON.replacer);
       const session = new WhatsappSession();
       session.id = id;
+      session.tenantId = tenantId;
       session.data = informationToStore;
       await repository.save(session);
     } catch (error) {
@@ -28,7 +31,7 @@ export const useTypeormAuthState = async (): Promise<{
 
   const readData = async (id: string) => {
     try {
-      const data = await repository.findOne({ where: { id } });
+      const data = await repository.findOne({ where: { id, tenantId } });
       if (data && data.data) {
         return JSON.parse(data.data, BufferJSON.reviver);
       }
@@ -41,7 +44,7 @@ export const useTypeormAuthState = async (): Promise<{
 
   const removeData = async (id: string) => {
     try {
-      await repository.delete({ id });
+      await repository.delete({ id, tenantId });
     } catch (error) {
       console.log("Error removing WhatsApp session data:", error);
     }
@@ -65,7 +68,7 @@ export const useTypeormAuthState = async (): Promise<{
               if (value) {
                 data[id] = value;
               }
-            })
+            }),
           );
           return data;
         },
