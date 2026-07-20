@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { TenantContext } from "../utils/tenantContext";
+import ensureUserIsAuthenticatedMiddleware from "../middlewares/ensureUserIsAuthenticated.middleware";
 import {
   isWhatsAppConnected,
   getWhatsAppQrCode,
@@ -7,23 +9,33 @@ import {
 
 export const whatsappRouter = Router();
 
-whatsappRouter.get("/status", (req, res) => {
-  const connected = isWhatsAppConnected();
-  const qr = getWhatsAppQrCode();
+whatsappRouter.get("/status", ensureUserIsAuthenticatedMiddleware, (req, res) => {
+  const tenantId = TenantContext.getTenantId();
+  if (!tenantId) {
+    res.status(400).json({ message: "Tenant não identificado" });
+    return;
+  }
 
-  res.json({
-    connected,
-    qr,
-  });
+  const connected = isWhatsAppConnected(tenantId);
+  const qr = getWhatsAppQrCode(tenantId);
+
+  res.json({ connected, qr });
 });
 
-whatsappRouter.post("/start", async (req, res) => {
+whatsappRouter.post("/start", ensureUserIsAuthenticatedMiddleware, async (req, res) => {
+  const tenantId = TenantContext.getTenantId();
+  if (!tenantId) {
+    res.status(400).json({ message: "Tenant não identificado" });
+    return;
+  }
+
   try {
-    if (isWhatsAppConnected()) {
-      return res.json({ message: "WhatsApp já está conectado." });
+    if (isWhatsAppConnected(tenantId)) {
+      res.json({ message: "WhatsApp já está conectado." });
+      return;
     }
 
-    await initWhatsApp(true);
+    await initWhatsApp(tenantId, true);
 
     res.json({ message: "Inicialização do WhatsApp disparada com sucesso." });
   } catch (error) {

@@ -14,12 +14,14 @@ import {
 } from "typeorm";
 import roleEnum from "../enum/role.enum";
 import { Appointment } from "./appointments.entity";
+import { Tenant } from "./tenant.entity";
 import { Shop } from "./shop.entity";
 
 @Entity("users")
 @Index("IDX_USER_ROLE", ["role"])
 @Index("IDX_USER_ROLE_ACTIVE", ["role", "isActive"])
 @Index("IDX_USER_CREATED_AT", ["createdAt"])
+@Index("IDX_USER_PHONE_TENANT", ["phoneNumber", "tenant"], { unique: true })
 export class User {
   @PrimaryGeneratedColumn("uuid")
   id: string;
@@ -27,7 +29,7 @@ export class User {
   @Column({ type: "varchar", length: 50 })
   name: string;
 
-  @Column({ type: "varchar", length: 25, unique: true })
+  @Column({ type: "varchar", length: 25 })
   phoneNumber: string;
 
   @Column({ type: "varchar", length: 125 })
@@ -45,6 +47,10 @@ export class User {
   @ManyToOne(() => Shop, (shop) => shop.users, { nullable: true, onDelete: "CASCADE" })
   @JoinColumn({ name: "shop_id" })
   shop: Shop;
+
+  @ManyToOne(() => Tenant, (tenant) => tenant.users, { nullable: true, onDelete: "CASCADE" })
+  @JoinColumn({ name: "tenant_id" })
+  tenant: Tenant;
 
   @OneToMany(() => Appointment, (appointment) => appointment.client)
   clientAppointments: Appointment[];

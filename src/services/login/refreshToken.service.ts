@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import { AppDataSource } from "../../data-source";
 import { User } from "../../entities/user.entity";
 import { AppError } from "../../errors";
+import { TenantContext } from "../../utils/tenantContext";
 
 const refreshTokenService = async (
   refreshTokenRequest: string,
@@ -16,20 +17,34 @@ const refreshTokenService = async (
   }
 
   const userId = decoded.sub;
-  const user = await repoUser.findOneBy({ id: userId });
+  const user = await TenantContext.bypass(() =>
+    repoUser.findOne({
+      where: { id: userId },
+      relations: ["tenant"],
+    })
+  );
 
   if (!user) {
     throw new AppError("Usuário não encontrado", 401);
   }
 
-
-  const newToken = jwt.sign({ role: user.role }, process.env.SECRET_KEY!, {
-    expiresIn: "24h", // mudar 15m depois em prod
-    subject: String(user.id),
-  });
+  const newToken = jwt.sign(
+    {
+      role: user.role,
+      tenantId: user.tenant ? user.tenant.id : null,
+    },
+    process.env.SECRET_KEY!,
+    {
+      expiresIn: "24h", // mudar 15m depois em prod
+      subject: String(user.id),
+    },
+  );
 
   const newRefreshToken = jwt.sign(
-    { role: user.role },
+    {
+      role: user.role,
+      tenantId: user.tenant ? user.tenant.id : null,
+    },
     process.env.SECRET_KEY!,
     {
       expiresIn: "7d", // mudar pra 7d em prod
@@ -37,7 +52,9 @@ const refreshTokenService = async (
     },
   );
 
-  await repoUser.update(user.id, { refreshToken: newRefreshToken });
+  await TenantContext.bypass(() =>
+    repoUser.update(user.id, { refreshToken: newRefreshToken })
+  );
 
   return { token: newToken, refreshToken: newRefreshToken };
 };

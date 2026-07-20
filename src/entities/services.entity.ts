@@ -4,13 +4,20 @@ import {
   Column,
   ManyToMany,
   JoinTable,
+  ManyToOne,
+  JoinColumn,
 } from "typeorm";
 import { Shop } from "./shop.entity";
+import { Tenant } from "./tenant.entity";
 
 @Entity("services")
 export class Service {
   @PrimaryGeneratedColumn("uuid")
   id: string;
+
+  @ManyToOne(() => Tenant, (tenant) => tenant.services, { nullable: false, onDelete: "CASCADE" })
+  @JoinColumn({ name: "tenant_id" })
+  tenant: Tenant;
 
   @Column({ type: "varchar" })
   name: string;
