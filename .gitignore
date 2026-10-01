@@ -11,3 +11,5 @@ count-exercises.ts
 *.sql
 .whatsapp_session/
 src/seed-test-data.ts
+iniciais.md
+.env.docker
