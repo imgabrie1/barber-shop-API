@@ -1,0 +1,35 @@
+services:
+  # ---- postgreSQL local ----
+  db:
+    image: postgres:16-alpine
+    container_name: barber-db
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gabriel -d barbershop"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---- backend API ----
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: barber-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.docker
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

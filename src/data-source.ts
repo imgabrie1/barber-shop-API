@@ -39,6 +39,26 @@ const dataSourceConfig = (): DataSourceOptions => {
 
   const cleanDbUrl = dbUrl.replace(/[?&]sslmode=[^&]*/g, "").replace(/\?$/, "");
 
+  const sslDisabled = process.env.DB_SSL_DISABLED === "true";
+
+  if (sslDisabled) {
+    console.log("--- DATABASE DEBUG ---");
+    console.log("NODE_ENV:", process.env.NODE_ENV);
+    console.log("SSL: DISABLED (local mode)");
+    console.log("--- END DATABASE DEBUG ---");
+
+    return {
+      type: "postgres",
+      url: cleanDbUrl,
+      synchronize: false,
+      logging: false,
+      migrationsRun: true,
+      migrations: [migrationsPath],
+      entities: [entitiesPath],
+      subscribers: [TenantSubscriber],
+    };
+  }
+
   const sslConfig =
     process.env.NODE_ENV === "production"
       ? {
