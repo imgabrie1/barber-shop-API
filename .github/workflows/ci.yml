@@ -1,0 +1,48 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # ----------------------------------------------------
+  # verifica a qualidade do código (TS)
+  # ----------------------------------------------------
+  code-quality:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clonar o repositório
+        uses: actions/checkout@v4
+
+      - name: Instalar Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Instalar pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10.22.0
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: Verificar erros de TypeScript
+        run: pnpm exec tsc --noEmit
+
+  # ----------------------------------------------------
+  # verifica se o docker não quebrou
+  # ----------------------------------------------------
+  docker-check:
+    name: Docker Build Test
+    runs-on: ubuntu-latest
+    needs: code-quality
+    steps:
+      - name: Clonar o repositório
+        uses: actions/checkout@v4
+
+      - name: Testar Build da Imagem Docker
+        run: docker build -t barber-test .
